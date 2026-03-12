@@ -368,6 +368,12 @@
          return; 
       }
 
+      // 【新增】：檢查密碼是否為 0 開頭
+      if (p.startsWith('0')) {
+         showMessage("⚠️ 密碼格式錯誤：請勿使用「0」開頭的密碼", "bg-red-100 text-red-700");
+         return;
+      }
+
       document.getElementById('register-btn').textContent = '處理中...'; document.getElementById('register-btn').disabled=true;
       
       runGas('registerNewUser', res => {
@@ -748,4 +754,3 @@
   </script>
 </body>
 </html>
-
