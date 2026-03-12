@@ -14,7 +14,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9999 !important; display: flex; justify-content: center; align-items: center; padding: 1rem; }
     
-    /* 跑馬燈專用 CSS (修復版：從右側滑入，40s) */
+    /* 跑馬燈專用 CSS */
     .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; box-sizing: border-box; }
     .marquee-content { display: inline-block; white-space: nowrap; padding-left: 100%; animation: marquee 40s linear infinite; }
     .marquee-container:hover .marquee-content { animation-play-state: paused; }
@@ -47,12 +47,12 @@
         <section id="auth-section" class="space-y-6 pt-2">
             <h2 id="auth-title" class="text-2xl font-bold text-center text-gray-700">使用者登入</h2>
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" name="username" placeholder="帳號名稱（中文全名）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
+                <input type="text" name="username" placeholder="帳號名稱（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入 2 到 4 個中文字" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
                 <input type="password" name="password" placeholder="密碼" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
                 <button type="submit" id="login-btn" class="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-md hover:bg-green-700 transition duration-200 text-lg">登入系統</button>
             </form>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-                <input type="text" name="username" placeholder="建立帳號（中文全名）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
+                <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入 2 到 4 個中文字" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <input type="password" name="password" placeholder="建立密碼（自訂）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <button type="submit" id="register-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition duration-200 text-lg">註冊新帳號</button>
             </form>
@@ -155,7 +155,6 @@
     
     <div class="flex-grow overflow-y-auto p-4 sm:p-6">
       <div class="max-w-4xl mx-auto space-y-6">
-        
         <div id="admin-tab-orders" class="space-y-4">
           <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200">
              <input type="text" id="order-search-input" oninput="filterOrders()" placeholder="🔍 搜尋姓名..." class="p-2 border rounded-lg outline-none w-1/2">
@@ -236,7 +235,7 @@
     // ==========================================
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyMQ6GViopoUg1eltqGcHmkwg5In793PCQT2Ra2ijJQMhISlAwHOEs3r7Bhz920-rjJ5Q/exec'; 
 
-    // --- 共用 API 呼叫函數 (取代 google.script.run) ---
+    // --- 共用 API 呼叫函數 ---
     function runGas(funcName, onSuccess, onFail, ...args) {
         fetch(GAS_WEB_APP_URL, {
             redirect: "follow",
@@ -320,12 +319,27 @@
       hideMessage();
     }
 
-    // --- 登入與註冊 ---
+    // --- 登入與註冊 (新增防呆中文驗證) ---
     function handleLogin(e, autoUser, autoPass) {
       if(e) e.preventDefault();
       hideMessage();
       const u = autoUser || document.forms['login-form'].username.value.trim();
       const p = autoPass || document.forms['login-form'].password.value.trim();
+
+      // 【核心更新】嚴格驗證是否為 2~4 個中文字
+      const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
+      if (!chineseNameRegex.test(u)) {
+        // 如果是舊的錯誤帳號自動登入進來的，立刻清除並踢出
+        if (!e) {
+          localStorage.removeItem('app_user');
+          localStorage.removeItem('app_pass');
+          document.getElementById('auto-login-msg').classList.add('hidden');
+          document.getElementById('auth-section').classList.remove('hidden');
+        }
+        showMessage("⚠️ 帳號格式錯誤：請輸入 2 到 4 個純中文字（真實姓名）", "bg-red-100 text-red-700");
+        return; // 終止，不發送給後端
+      }
+
       if(e){ document.getElementById('login-btn').textContent = '驗證中...'; document.getElementById('login-btn').disabled=true; }
       
       runGas('checkUserLogin', res => {
@@ -347,6 +361,14 @@
     function handleRegister(e) {
       e.preventDefault(); hideMessage();
       const u = e.target.username.value.trim(); const p = e.target.password.value.trim();
+
+      // 【核心更新】嚴格驗證是否為 2~4 個中文字
+      const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
+      if (!chineseNameRegex.test(u)) {
+         showMessage("⚠️ 帳號格式錯誤：請輸入 2 到 4 個純中文字（真實姓名）", "bg-red-100 text-red-700");
+         return; // 終止，不發送給後端
+      }
+
       document.getElementById('register-btn').textContent = '處理中...'; document.getElementById('register-btn').disabled=true;
       
       runGas('registerNewUser', res => {
@@ -726,5 +748,4 @@
     }
   </script>
 </body>
-
 </html>
