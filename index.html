@@ -47,12 +47,12 @@
         <section id="auth-section" class="space-y-6 pt-2">
             <h2 id="auth-title" class="text-2xl font-bold text-center text-gray-700">使用者登入</h2>
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" name="username" placeholder="帳號名稱（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入 2 到 4 個中文字" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
+                <input type="text" name="username" placeholder="帳號名稱（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
                 <input type="password" name="password" placeholder="密碼" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
                 <button type="submit" id="login-btn" class="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-md hover:bg-green-700 transition duration-200 text-lg">登入系統</button>
             </form>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-                <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入 2 到 4 個中文字" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
+                <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <input type="password" name="password" placeholder="建立密碼（自訂）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <button type="submit" id="register-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition duration-200 text-lg">註冊新帳號</button>
             </form>
@@ -319,25 +319,24 @@
       hideMessage();
     }
 
-    // --- 登入與註冊 (新增防呆中文驗證) ---
+    // --- 登入與註冊 ---
     function handleLogin(e, autoUser, autoPass) {
       if(e) e.preventDefault();
       hideMessage();
       const u = autoUser || document.forms['login-form'].username.value.trim();
       const p = autoPass || document.forms['login-form'].password.value.trim();
 
-      // 【核心更新】嚴格驗證是否為 2~4 個中文字
+      // 嚴格驗證是否為 2~4 個中文字
       const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
       if (!chineseNameRegex.test(u)) {
-        // 如果是舊的錯誤帳號自動登入進來的，立刻清除並踢出
         if (!e) {
           localStorage.removeItem('app_user');
           localStorage.removeItem('app_pass');
           document.getElementById('auto-login-msg').classList.add('hidden');
           document.getElementById('auth-section').classList.remove('hidden');
         }
-        showMessage("⚠️ 帳號格式錯誤：請輸入 2 到 4 個純中文字（真實姓名）", "bg-red-100 text-red-700");
-        return; // 終止，不發送給後端
+        showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700");
+        return; 
       }
 
       if(e){ document.getElementById('login-btn').textContent = '驗證中...'; document.getElementById('login-btn').disabled=true; }
@@ -362,11 +361,11 @@
       e.preventDefault(); hideMessage();
       const u = e.target.username.value.trim(); const p = e.target.password.value.trim();
 
-      // 【核心更新】嚴格驗證是否為 2~4 個中文字
+      // 嚴格驗證是否為 2~4 個中文字
       const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
       if (!chineseNameRegex.test(u)) {
-         showMessage("⚠️ 帳號格式錯誤：請輸入 2 到 4 個純中文字（真實姓名）", "bg-red-100 text-red-700");
-         return; // 終止，不發送給後端
+         showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700");
+         return; 
       }
 
       document.getElementById('register-btn').textContent = '處理中...'; document.getElementById('register-btn').disabled=true;
