@@ -53,7 +53,7 @@
             </form>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
                 <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
-                <input type="password" name="password" placeholder="建立密碼（自訂）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
+                <input type="password" name="password" placeholder="建立密碼（請避免“0“開頭的密碼）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <button type="submit" id="register-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition duration-200 text-lg">註冊新帳號</button>
             </form>
             <p id="auth-toggle-link" class="text-center text-sm text-gray-600"></p>
@@ -748,3 +748,4 @@
   </script>
 </body>
 </html>
+
