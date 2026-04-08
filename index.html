@@ -121,7 +121,7 @@
         <div id="modal-content" class="space-y-6"></div>
       </div>
       <div class="p-4 border-t bg-gray-50 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <button id="add-to-cart-btn" class="w-full py-4 bg-pink-600 text-white font-bold rounded-lg text-lg hover:bg-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md" onclick="confirmOptions()">確認選擇</button>
+        <button id="add-to-cart-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-lg text-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md" onclick="confirmOptions()">確認選擇</button>
       </div>
     </div>
   </div>
@@ -236,22 +236,25 @@
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[95vh] relative">
       <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
         <h2 id="editor-modal-title" class="text-xl font-bold text-gray-800">編輯品項</h2>
-        <button onclick="closeMenuEditorModal()" class="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none">&times;</button>
+        <label class="flex items-center gap-2 cursor-pointer bg-pink-100 px-3 py-1.5 rounded-lg text-pink-700 font-bold hover:bg-pink-200 transition">
+          <input type="checkbox" id="edit-item-bafang" class="w-4 h-4 text-pink-600 rounded"> 八方模式
+        </label>
+        <button onclick="closeMenuEditorModal()" class="text-gray-400 hover:text-gray-600 text-3xl font-bold leading-none ml-2">&times;</button>
       </div>
       <div class="p-5 overflow-y-auto space-y-4 flex-grow">
+        <p class="text-xs text-pink-600 font-bold -mt-2">＊勾選右上角「八方模式」後，前台價格將顯示為「?元/顆」，並且購物車結帳時會自動忽略基本價格，直接以【選項】的總價為主！</p>
         <div class="space-y-3">
-          <div><label class="block text-sm font-bold text-gray-700 mb-1">分類區塊 (例如：水餃、鍋貼) <span class="text-red-500">*</span></label><input type="text" id="edit-item-category" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300"></div>
+          <div><label class="block text-sm font-bold text-gray-700 mb-1">分類區塊 (例如：水餃、鍋貼、湯) <span class="text-red-500">*</span></label><input type="text" id="edit-item-category" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300"></div>
           <div><label class="block text-sm font-bold text-gray-700 mb-1">品項名稱 <span class="text-red-500">*</span></label><input type="text" id="edit-item-name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300"></div>
-          <div><label class="block text-sm font-bold text-gray-700 mb-1">基本價格 <span class="text-red-500">*</span></label><input type="number" id="edit-item-price" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300" placeholder="0"></div>
+          <div><label class="block text-sm font-bold text-gray-700 mb-1">基本價格 (八方模式時此格僅做展示) <span class="text-red-500">*</span></label><input type="number" id="edit-item-price" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300" placeholder="0"></div>
           <div><label class="block text-sm font-bold text-gray-700 mb-1">圖片網址 (選填)</label><input type="text" id="edit-item-image" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300 text-sm" placeholder="https://..."></div>
         </div>
         <hr>
         <div>
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-base font-bold text-pink-600">🛒 客製化選項 (可複選)</label>
+            <label class="block text-base font-bold text-pink-600">🛒 客製化選項</label>
             <button onclick="addOptionGroup()" class="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold hover:bg-pink-200">+ 新增群組</button>
           </div>
-          <p class="text-xs text-gray-500 mb-3">例如：新增「數量」群組，裡面包含「5顆(+30)」、「10顆(+60)」等，選項將以多選(Checkbox)呈現。</p>
           <div id="options-builder-container" class="space-y-3"></div>
         </div>
       </div>
@@ -478,7 +481,7 @@
       }, showGasError);
     }
 
-    // 【修改】將菜單依照分類進行分區塊顯示
+    // 依據分類 (Category) 渲染選單
     function renderMenuCards(items) {
       const container = document.getElementById('menu-list-grid');
       if (items.length === 0) { 
@@ -498,12 +501,15 @@
         html += `
           <div class="mb-8">
             <h3 class="text-xl font-bold text-pink-600 border-b-2 border-pink-200 pb-2 mb-4 flex items-center gap-2">
-              <span class="text-2xl">🥟</span> ${cat}
+              <span class="text-2xl">🏷️</span> ${cat}
             </h3>
             <div class="grid grid-cols-1 gap-4">
         `;
         grouped[cat].forEach(item => {
           const imgHtml = item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-gray-100 flex items-center justify-center text-3xl opacity-50">🍽️</div>`;
+          // 【判斷八方模式】：若是八方模式，價格加上 /顆
+          const priceDisplay = item.isBafangMode ? `NT$ ${item.price} /顆` : `NT$ ${item.price}`;
+          
           html += `
           <div class="menu-card flex p-3 rounded-xl shadow-sm hover:shadow-md ring-1 ring-gray-200 bg-white gap-3 cursor-pointer" onclick="handleItemClick('${item.id}')">
             <div class="img-container flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-100 relative shadow-sm">
@@ -512,7 +518,7 @@
             </div>
             <div class="flex-grow flex flex-col justify-between py-1 pr-1">
               <div><h3 class="text-lg font-bold text-gray-800 leading-tight">${item.name}</h3></div>
-              <div class="flex justify-between items-end mt-2"><span class="text-lg font-extrabold text-gray-800">NT$ ${item.price}</span></div>
+              <div class="flex justify-between items-end mt-2"><span class="text-lg font-extrabold text-gray-800">${priceDisplay}</span></div>
             </div>
           </div>`;
         });
@@ -555,7 +561,8 @@
     }
 
     let isProxyModeForModal = false;
-    // 【修改】將選項從 Radio 單選 改為 Checkbox 多選
+    
+    // 【修改】支援群組的 單選(radio) 與 多選(checkbox) 渲染
     function openOptionsModal(item, isProxy) {
       isProxyModeForModal = isProxy; const imgContainer = document.getElementById('modal-image-container'); const headerNoImg = document.getElementById('modal-header-no-img');
       if (item.image) {
@@ -565,48 +572,87 @@
         imgContainer.classList.add('hidden'); headerNoImg.classList.remove('hidden'); document.getElementById('modal-title-no-img').textContent = item.name; document.getElementById('modal-title-with-img').classList.add('hidden');
       }
       const content = document.getElementById('modal-content'); content.innerHTML = '';
+      
       Object.keys(item.options).forEach(optName => {
-        const html = item.options[optName].map((opt, idx) => {
+        const grp = item.options[optName];
+        // 相容舊資料，若沒有 type 屬性則預設為單選 radio
+        const isRadio = !grp.type || grp.type === 'radio';
+        const inputType = isRadio ? 'radio' : 'checkbox';
+        const reqLabel = isRadio ? '<span class="text-red-500 text-xs font-normal ml-1">* 單選 (必選)</span>' : '<span class="text-pink-500 text-xs font-normal ml-1">* 可多選</span>';
+        
+        const choicesArray = grp.choices || grp; // 相容舊陣列結構
+        
+        const html = choicesArray.map((opt, idx) => {
           const name = Array.isArray(opt) ? opt[0] : opt; const extra = Array.isArray(opt) ? opt[1] : 0;
-          return `<label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"><input type="checkbox" name="option-${optName}" value="${name}" data-extra="${extra}" onchange="checkModalSelections()" class="form-checkbox h-5 w-5 text-pink-600 rounded"><span class="ml-3 text-gray-700 font-medium">${name}${extra>0?` (+NT$${extra})`:''}</span></label>`;
+          return `<label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"><input type="${inputType}" name="option-${optName}" value="${name}" data-extra="${extra}" onchange="checkModalSelections()" class="form-${inputType} h-5 w-5 text-pink-600"><span class="ml-3 text-gray-700 font-medium">${name}${extra>0?` (+NT$${extra})`:''}</span></label>`;
         }).join('');
-        content.insertAdjacentHTML('beforeend', `<div><h4 class="text-lg font-bold mb-2 text-gray-800">${optName} <span class="text-pink-500 text-xs font-normal ml-1">* 可複選</span></h4><div class="space-y-2">${html}</div></div>`);
+        
+        content.insertAdjacentHTML('beforeend', `<div><h4 class="text-lg font-bold mb-2 text-gray-800">${optName} ${reqLabel}</h4><div class="space-y-2">${html}</div></div>`);
       });
       checkModalSelections(); document.getElementById('options-modal').classList.remove('hidden');
     }
 
     function closeOptionsModal() { document.getElementById('options-modal').classList.add('hidden'); configuringItem = null; }
     
-    // 【修改】改為抓取 Checkbox 的多選計算，預設永遠可以加入購物車 (就算不選選項也可以)
+    // 【修改】判斷邏輯：單選必填，多選可不填；八方模式不計算基本價
     function checkModalSelections() {
       if(!configuringItem) return; 
-      let extra = 0; 
-      document.querySelectorAll('#modal-content input[type="checkbox"]:checked').forEach(sel => {
+      let extra = 0; let allChecked = true;
+      
+      Object.keys(configuringItem.options).forEach(cat => {
+        const grp = configuringItem.options[cat];
+        if (!grp.type || grp.type === 'radio') {
+           // 如果是單選(radio)，必須選一個
+           const sel = document.querySelector(`input[name="option-${cat}"]:checked`);
+           if(!sel) allChecked = false;
+        }
+      });
+
+      document.querySelectorAll('#modal-content input:checked').forEach(sel => {
         extra += parseFloat(sel.dataset.extra || 0);
       });
+      
       const btn = document.getElementById('add-to-cart-btn');
-      btn.disabled = false;
-      btn.textContent = `確認選擇 (NT$${configuringItem.price + extra})`;
+      if (allChecked) {
+         btn.disabled = false; 
+         // 如果是八方模式，基本價格當作 0 (因為選項直接輸入總價)
+         const basePrice = configuringItem.isBafangMode ? 0 : configuringItem.price;
+         btn.textContent = `確認選擇 (NT$${basePrice + extra})`;
+      } else {
+         btn.disabled = true; 
+         btn.textContent = "您有選項尚未完成";
+      }
     }
 
-    // 【修改】支援將多個 Checkbox 選項合併存入購物車
     function confirmOptions() {
       if(!configuringItem) return; 
       let extraTotal = 0; const selections = {};
-      document.querySelectorAll('#modal-content input[type="checkbox"]:checked').forEach(r => { 
+      
+      document.querySelectorAll('#modal-content input:checked').forEach(r => { 
         const cat = r.name.replace('option-','');
-        if(!selections[cat]) selections[cat] = [];
-        selections[cat].push(r.value);
+        const grp = configuringItem.options[cat];
+        const isCheckbox = grp && grp.type === 'checkbox';
+        
+        if (isCheckbox) {
+           if(!selections[cat]) selections[cat] = [];
+           selections[cat].push(r.value);
+        } else {
+           selections[cat] = r.value;
+        }
         extraTotal += parseFloat(r.dataset.extra||0); 
       });
-      // 將陣列轉回字串顯示
+      
       for (let key in selections) {
-        selections[key] = selections[key].join(', ');
+        if(Array.isArray(selections[key])) selections[key] = selections[key].join(', ');
       }
       
-      const finalPrice = configuringItem.price + extraTotal; const targetCart = isProxyModeForModal ? proxyCart : cartItems;
+      const basePrice = configuringItem.isBafangMode ? 0 : configuringItem.price;
+      const finalPrice = basePrice + extraTotal; 
+      
+      const targetCart = isProxyModeForModal ? proxyCart : cartItems;
       targetCart.push({ id: configuringItem.id, name: configuringItem.name, price: finalPrice, type: configuringItem.type, selections: selections });
-      if(isProxyModeForModal) renderProxyCart(); else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
+      
+      if(isProxyModeForModal) renderProxyCart(); else { updateCartUI(); showMessage(`已加入：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
       closeOptionsModal();
     }
 
@@ -654,7 +700,7 @@
     function captureSummary() { const el = document.getElementById('summary-capture-area'); const bg = el.style.backgroundColor; el.style.backgroundColor = "#fff"; html2canvas(el, { scale: 2 }).then(canvas => { el.style.backgroundColor = bg; document.getElementById('preview-img').src = canvas.toDataURL("image/png"); document.getElementById('image-preview-modal').classList.remove('hidden'); }); }
 
     // ==========================================
-    // 菜單編輯系統 (包含分類欄位)
+    // 菜單編輯系統 (包含單選/多選、八方模式)
     // ==========================================
     let adminMenuData = [];
     let editingItemIndex = -1;
@@ -705,7 +751,8 @@
       editingItemIndex = index;
       if (index === -1) {
         document.getElementById('editor-modal-title').textContent = "新增品項";
-        document.getElementById('edit-item-category').value = ""; // 清空分類
+        document.getElementById('edit-item-bafang').checked = false; 
+        document.getElementById('edit-item-category').value = ""; 
         document.getElementById('edit-item-name').value = "";
         document.getElementById('edit-item-price').value = "";
         document.getElementById('edit-item-image').value = "";
@@ -713,11 +760,23 @@
       } else {
         const item = adminMenuData[index];
         document.getElementById('editor-modal-title').textContent = `編輯：${item.name}`;
-        document.getElementById('edit-item-category').value = item.category || "未分類"; // 讀取分類
+        document.getElementById('edit-item-bafang').checked = item.isBafangMode || false;
+        document.getElementById('edit-item-category').value = item.category || "未分類"; 
         document.getElementById('edit-item-name').value = item.name;
         document.getElementById('edit-item-price').value = item.price;
         document.getElementById('edit-item-image').value = item.image || "";
-        currentEditOptions = item.options ? JSON.parse(JSON.stringify(item.options)) : {};
+        
+        currentEditOptions = {};
+        if (item.options) {
+           const opts = JSON.parse(JSON.stringify(item.options));
+           for (let k in opts) {
+              if (Array.isArray(opts[k])) {
+                 currentEditOptions[k] = { type: 'radio', choices: opts[k] };
+              } else {
+                 currentEditOptions[k] = opts[k];
+              }
+           }
+        }
       }
       renderOptionsBuilderUI();
       document.getElementById('menu-editor-modal').classList.remove('hidden');
@@ -729,27 +788,36 @@
       const container = document.getElementById('options-builder-container');
       const keys = Object.keys(currentEditOptions);
       if (keys.length === 0) {
-        container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded border border-dashed">尚未設定任何加購選項</p>';
+        container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4 bg-gray-50 rounded border border-dashed">尚未設定任何客製選項</p>';
         return;
       }
 
       let html = '';
       keys.forEach(groupName => {
+        const grp = currentEditOptions[groupName];
+        const gType = grp.type || 'radio';
+        
         html += `
           <div class="border border-gray-200 p-3 rounded-lg bg-white relative shadow-sm">
             <div class="flex justify-between items-center mb-2">
-              <input type="text" value="${groupName}" onchange="renameOptionGroup('${groupName}', this.value)" class="font-bold text-gray-700 bg-transparent border-b border-gray-300 w-1/2 outline-none focus:border-pink-500 px-1" placeholder="輸入群組名稱(如:甜度)">
-              <button onclick="deleteOptionGroup('${groupName}')" class="text-red-500 hover:bg-red-50 px-2 py-1 rounded text-sm font-bold">刪除群組</button>
+              <input type="text" value="${groupName}" onchange="renameOptionGroup('${groupName}', this.value)" class="font-bold text-gray-700 bg-transparent border-b border-gray-300 w-1/3 outline-none focus:border-pink-500 px-1" placeholder="群組名(如:數量)">
+              <div class="flex gap-2">
+                <select onchange="updateGroupType('${groupName}', this.value)" class="text-xs border border-pink-200 rounded text-pink-700 font-bold px-1 outline-none">
+                  <option value="radio" ${gType==='radio'?'selected':''}>單選 (必選)</option>
+                  <option value="checkbox" ${gType==='checkbox'?'selected':''}>多選 (選填)</option>
+                </select>
+                <button onclick="deleteOptionGroup('${groupName}')" class="text-red-500 hover:bg-red-50 px-2 py-1 rounded text-sm font-bold">刪除群組</button>
+              </div>
             </div>
             <div class="space-y-2 pl-2 border-l-2 border-pink-100">`;
 
-        currentEditOptions[groupName].forEach((opt, idx) => {
+        grp.choices.forEach((opt, idx) => {
           let optName = Array.isArray(opt) ? opt[0] : opt;
           let optPrice = Array.isArray(opt) ? opt[1] : 0;
           html += `
             <div class="flex items-center gap-2">
               <span class="text-gray-400 text-xs">↳</span>
-              <input type="text" value="${optName}" onchange="updateOptionItem('${groupName}', ${idx}, 'name', this.value)" class="border border-gray-200 p-1.5 text-sm rounded flex-1 focus:ring-1 ring-pink-300 outline-none" placeholder="選項名稱(如:半糖)">
+              <input type="text" value="${optName}" onchange="updateOptionItem('${groupName}', ${idx}, 'name', this.value)" class="border border-gray-200 p-1.5 text-sm rounded flex-1 focus:ring-1 ring-pink-300 outline-none" placeholder="名稱(如:10顆)">
               <span class="text-xs text-gray-500 font-bold">+NT$</span>
               <input type="number" value="${optPrice}" onchange="updateOptionItem('${groupName}', ${idx}, 'price', this.value)" class="border border-gray-200 p-1.5 text-sm rounded w-16 text-center focus:ring-1 ring-pink-300 outline-none" placeholder="0">
               <button onclick="deleteOptionItem('${groupName}', ${idx})" class="text-gray-400 hover:text-red-500 font-bold text-lg px-1">&times;</button>
@@ -761,11 +829,13 @@
       container.innerHTML = html;
     }
 
+    function updateGroupType(groupName, newType) { currentEditOptions[groupName].type = newType; }
+
     function addOptionGroup() {
       const baseName = "新群組";
       let count = 1; let newName = baseName;
       while(currentEditOptions[newName]) { count++; newName = `${baseName}${count}`; }
-      currentEditOptions[newName] = [["選項1", 0]]; 
+      currentEditOptions[newName] = { type: 'radio', choices: [["選項1", 0]] }; 
       renderOptionsBuilderUI();
     }
     
@@ -787,19 +857,20 @@
       currentEditOptions = newObj; renderOptionsBuilderUI();
     }
 
-    function addOptionItem(groupName) { currentEditOptions[groupName].push(["新選項", 0]); renderOptionsBuilderUI(); }
+    function addOptionItem(groupName) { currentEditOptions[groupName].choices.push(["新選項", 0]); renderOptionsBuilderUI(); }
 
     function updateOptionItem(groupName, index, field, value) {
-      let opt = currentEditOptions[groupName][index];
+      let opt = currentEditOptions[groupName].choices[index];
       let name = Array.isArray(opt) ? opt[0] : opt; let price = Array.isArray(opt) ? opt[1] : 0;
       if (field === 'name') name = value.trim() || "未命名";
       if (field === 'price') price = parseInt(value) || 0;
-      currentEditOptions[groupName][index] = [name, price];
+      currentEditOptions[groupName].choices[index] = [name, price];
     }
 
-    function deleteOptionItem(groupName, index) { currentEditOptions[groupName].splice(index, 1); renderOptionsBuilderUI(); }
+    function deleteOptionItem(groupName, index) { currentEditOptions[groupName].choices.splice(index, 1); renderOptionsBuilderUI(); }
 
     function saveItemToLocalData() {
+      const isBafangMode = document.getElementById('edit-item-bafang').checked;
       const category = document.getElementById('edit-item-category').value.trim() || '未分類';
       const name = document.getElementById('edit-item-name').value.trim();
       const price = parseFloat(document.getElementById('edit-item-price').value) || 0;
@@ -808,15 +879,17 @@
       if (!name) return alert("請輸入品項名稱！");
       const finalOptions = {};
       for(let key in currentEditOptions) {
-        if (currentEditOptions[key].length > 0) {
-          finalOptions[key] = currentEditOptions[key].map(opt => {
-            const optName = Array.isArray(opt) ? opt[0] : opt; const optPrice = Array.isArray(opt) ? opt[1] : 0;
-            return optPrice === 0 ? optName : [optName, optPrice];
-          });
+        if (currentEditOptions[key].choices && currentEditOptions[key].choices.length > 0) {
+           finalOptions[key] = {
+              type: currentEditOptions[key].type,
+              choices: currentEditOptions[key].choices.map(opt => {
+                 const optName = Array.isArray(opt) ? opt[0] : opt; const optPrice = Array.isArray(opt) ? opt[1] : 0;
+                 return optPrice === 0 ? optName : [optName, optPrice];
+              })
+           };
         }
       }
-      // 將 category 存入物件
-      const newItem = { id: `temp-${Date.now()}`, category, name, price, image, options: finalOptions };
+      const newItem = { id: `temp-${Date.now()}`, isBafangMode, category, name, price, image, options: finalOptions };
       if (editingItemIndex === -1) adminMenuData.push(newItem);
       else adminMenuData[editingItemIndex] = newItem;
       
