@@ -7,45 +7,30 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    /* ==================================================== */
-    /* 修改背景色為櫻花粉白 ==================================== */
-    /* ==================================================== */
     body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #fff0f6; -webkit-tap-highlight-color: transparent; position: relative; overflow-x: hidden; }
     button { touch-action: manipulation; cursor: pointer; position: relative; z-index: 10; user-select: none; }
     input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
     
-    /* ==================================================== */
-    /* 載入中 Spinner 修改為粉色 ============================= */
-    /* ==================================================== */
     .loading-spinner { border-top-color: #f472b6; border-radius: 50%; width: 1.5rem; height: 1.5rem; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9999 !important; display: flex; justify-content: center; align-items: center; padding: 1rem; }
     
-    /* 跑馬燈專用 CSS */
     .marquee-container { overflow: hidden; white-space: nowrap; width: 100%; box-sizing: border-box; }
     .marquee-content { display: inline-block; white-space: nowrap; padding-left: 100%; animation: marquee 40s linear infinite; }
     .marquee-container:hover .marquee-content { animation-play-state: paused; }
     @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
     
-    /* 卡片懸停效果 */
     .menu-card { transition: all 0.2s ease-in-out; }
     .menu-card:active { transform: scale(0.98); }
     .img-container img { transition: transform 0.3s ease; }
     .menu-card:hover .img-container img { transform: scale(1.05); }
 
-    /* ================= 櫻花飄落特效 CSS (整合自 26TCd) ================= */
     .sakura-container {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      pointer-events: none; /* 讓花瓣不會擋住使用者的點擊 */
-      z-index: 5; /* 讓櫻花飄在卡片上方 */
-      overflow: hidden;
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 5; overflow: hidden;
     }
     .sakura-petal {
-      position: absolute;
-      top: -20%; /* 確保一開始絕對在畫面外 */
-      opacity: 0; /* 預設完全透明 */
+      position: absolute; top: -20%; opacity: 0;
       background: linear-gradient(135deg, #ffb7b2, #fbcfe8);
       border-radius: 15px 0 15px 0;
       animation: fall linear infinite, sway ease-in-out infinite alternate;
@@ -54,22 +39,17 @@
     }
     
     @keyframes fall {
-      0% { top: -20%; opacity: 0; }
-      10% { opacity: 0.85; }
-      80% { opacity: 0.85; }
-      100% { top: 110%; opacity: 0; }
+      0% { top: -20%; opacity: 0; } 10% { opacity: 0.85; } 80% { opacity: 0.85; } 100% { top: 110%; opacity: 0; }
     }
-    
     @keyframes sway {
-      0% { transform: translateX(0px) rotate(0deg); }
-      100% { transform: translateX(40px) rotate(60deg); }
+      0% { transform: translateX(0px) rotate(0deg); } 100% { transform: translateX(40px) rotate(60deg); }
     }
-    /* ==================================================== */
   </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen flex flex-col items-center justify-start relative">
 
   <div class="sakura-container" id="sakura-container"></div>
+
   <div id="main-container" class="w-full max-w-xl bg-white shadow-2xl rounded-2xl p-4 sm:p-8 space-y-6 ring-4 ring-pink-300/50 relative z-10 flex flex-col min-h-[80vh]">
     <div class="flex-grow space-y-6">
         <header class="text-center pb-4 border-b border-gray-200">
@@ -94,7 +74,7 @@
             </form>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
                 <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
-                <input type="password" name="password" placeholder="建立密碼（請避免“0“開頭的密碼）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
+                <input type="password" name="password" placeholder="建立密碼（勿0開頭）" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
                 <button type="submit" id="register-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-xl shadow-md hover:bg-indigo-700 transition duration-200 text-lg">註冊新帳號</button>
             </form>
             <p id="auth-toggle-link" class="text-center text-sm text-gray-600"></p>
@@ -138,6 +118,18 @@
     <div class="text-center text-sm text-gray-400 pt-4 border-t border-gray-100 w-full mt-auto font-medium">&copy; 2026 Yang Technology 版權所有 | Professional Order System</div>
   </div>
 
+  <div id="reset-pwd-modal" class="modal-overlay hidden z-[10000]">
+    <div class="bg-white rounded-xl shadow-2xl p-6 space-y-5 w-80 text-center relative">
+      <h3 class="text-2xl font-bold text-pink-600 border-b pb-2">重設密碼</h3>
+      <p class="text-sm text-gray-700 text-left font-bold text-red-500 leading-relaxed bg-red-50 p-2 rounded border border-red-100">⚠️ 提醒：為了帳號安全，每個帳號【僅限一次】更改密碼的機會，修改後請務必牢記新密碼！</p>
+      <input type="password" id="new-reset-pwd" placeholder="請輸入新密碼 (勿0開頭)" class="w-full p-4 border-2 border-pink-200 rounded-lg outline-none focus:border-pink-500 transition font-bold text-center text-gray-700">
+      <div class="flex justify-center gap-3 pt-2">
+        <button onclick="closeResetPwdModal()" class="flex-1 py-3 bg-gray-200 text-gray-700 rounded-lg font-bold hover:bg-gray-300 transition">放棄修改</button>
+        <button id="submit-reset-pwd-btn" onclick="submitResetPassword()" class="flex-1 py-3 bg-pink-600 text-white rounded-lg font-bold hover:bg-pink-700 transition">確認更改</button>
+      </div>
+    </div>
+  </div>
+
   <div id="options-modal" class="modal-overlay hidden">
     <div class="bg-white rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden transform transition-all duration-300 relative">
       <div id="modal-image-container" class="relative w-full h-48 sm:h-56 bg-gray-100 flex-shrink-0 hidden">
@@ -162,7 +154,7 @@
     <div class="bg-white w-80 rounded-xl shadow-2xl p-6 text-center space-y-4">
        <div id="system-modal-icon" class="text-4xl">⚠️</div>
        <h3 class="text-lg font-bold text-gray-800">系統提示</h3>
-       <p id="system-modal-message" class="text-sm text-gray-600 leading-relaxed"></p>
+       <p id="system-modal-message" class="text-sm text-gray-600 leading-relaxed whitespace-pre-line"></p>
        <div class="flex justify-center gap-3 pt-2">
           <button id="system-modal-cancel" onclick="closeSystemModal()" class="flex-1 py-2 bg-gray-200 text-gray-700 rounded-lg font-bold hidden">取消</button>
           <button id="system-modal-confirm" class="flex-1 py-2 bg-red-600 text-white rounded-lg font-bold">確定</button>
@@ -271,12 +263,9 @@
   </section>
 
   <script>
-    // ==========================================
-    // ⚠️ 必填：請將下方替換為你的 GAS 網頁應用程式網址 ⚠️
-    // ==========================================
+    // ⚠️ 已補回你的專屬 GAS 網址 ⚠️
     const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyMQ6GViopoUg1eltqGcHmkwg5In793PCQT2Ra2ijJQMhISlAwHOEs3r7Bhz920-rjJ5Q/exec'; 
 
-    // --- 共用 API 呼叫函數 ---
     function runGas(funcName, onSuccess, onFail, ...args) {
         fetch(GAS_WEB_APP_URL, {
             redirect: "follow",
@@ -298,45 +287,31 @@
         });
     }
 
-    // ================= 櫻花飄落特效 JS (整合自 26TCd) =================
     function createSakura() {
       const container = document.getElementById('sakura-container');
       const petalCount = 40; 
-      
       for (let i = 0; i < petalCount; i++) {
         const petal = document.createElement('div');
         petal.className = 'sakura-petal';
-        
         const size = Math.random() * 10 + 8;
         const startPositionLeft = Math.random() * 100;
         const fallDuration = Math.random() * 5 + 6;
         const swayDuration = Math.random() * 2 + 2;
-        
-        // 🌟 改成負數延遲，讓動畫預先開跑，避免全部擠在頂端！
         const fallDelay = -(Math.random() * fallDuration);
         const swayDelay = -(Math.random() * swayDuration);
 
-        petal.style.width = `${size}px`;
-        petal.style.height = `${size * 1.3}px`;
+        petal.style.width = `${size}px`; petal.style.height = `${size * 1.3}px`;
         petal.style.left = `${startPositionLeft}vw`;
         petal.style.animationDuration = `${fallDuration}s, ${swayDuration}s`;
         petal.style.animationDelay = `${fallDelay}s, ${swayDelay}s`;
-
         container.appendChild(petal);
       }
     }
-    // ====================================================
 
-    function showGasError(err) {
-        showAlertModal(`伺服器連線失敗: ${err.message}`);
-    }
+    function showGasError(err) { showAlertModal(`伺服器連線失敗: ${err.message}`); }
 
-    // --- 共用與 Modal 邏輯 ---
     let currentUsername = null;
-    let menuData = [];
-    let cartItems = [];
-    let configuringItem = null;
-    let onConfirmCallback = null;
+    let menuData = []; let cartItems = []; let configuringItem = null; let onConfirmCallback = null;
 
     function showConfirmModal(msg, cb, isDanger=false) {
         document.getElementById('system-modal-message').textContent = msg;
@@ -348,16 +323,17 @@
         document.getElementById('system-modal-cancel').classList.remove('hidden');
         document.getElementById('system-modal').classList.remove('hidden');
     }
+    
     function showAlertModal(msg) {
         document.getElementById('system-modal-message').textContent = msg;
         document.getElementById('system-modal-icon').textContent = "✅";
         const confirmBtn = document.getElementById('system-modal-confirm');
         confirmBtn.onclick = closeSystemModal;
-        // ================= 修改提示框按鈕顏色為粉色 =====================
         confirmBtn.className = "flex-1 py-2 bg-pink-600 text-white rounded-lg font-bold";
         document.getElementById('system-modal-cancel').classList.add('hidden');
         document.getElementById('system-modal').classList.remove('hidden');
     }
+    
     function closeSystemModal() { document.getElementById('system-modal').classList.add('hidden'); onConfirmCallback = null; }
     function closeImagePreview(e) { if(e && e.target !== e.currentTarget) return; document.getElementById('image-preview-modal').classList.add('hidden'); }
     function showMessage(msg, styleClass) {
@@ -367,20 +343,14 @@
     }
     function hideMessage() { document.getElementById('message-box').classList.add('hidden'); }
 
-    // --- 初始化 ---
     window.onload = () => {
-      // 🌟 初始化櫻花飄落
       createSakura();
-
-      const savedUser = localStorage.getItem('app_user');
-      const savedPass = localStorage.getItem('app_pass');
+      const savedUser = localStorage.getItem('app_user'); const savedPass = localStorage.getItem('app_pass');
       if (savedUser && savedPass) {
           document.getElementById('auto-login-msg').classList.remove('hidden');
           document.getElementById('auth-section').classList.add('hidden');
           handleLogin(null, savedUser, savedPass);
-      } else {
-          toggleAuthMode(true);
-      }
+      } else { toggleAuthMode(true); }
     };
 
     function toggleAuthMode(isLogin) {
@@ -388,36 +358,57 @@
       document.getElementById('register-form').classList.toggle('hidden', isLogin);
       document.getElementById('auth-title').textContent = isLogin ? '使用者登入' : '註冊新帳號';
       const link = document.getElementById('auth-toggle-link');
-      // ================= 修改切換連結顏色為粉色 =====================
       link.innerHTML = isLogin ? '還沒帳號？<span class="text-indigo-500 cursor-pointer font-bold">點此註冊</span>' : '已有帳號？<span class="text-pink-500 cursor-pointer font-bold">點此登入</span>';
       link.onclick = () => toggleAuthMode(!isLogin);
       hideMessage();
     }
 
+    // --- 密碼重設前端邏輯 ---
+    let resettingUsername = "";
+    function openResetPwdModal(username) {
+      resettingUsername = username;
+      document.getElementById('new-reset-pwd').value = "";
+      document.getElementById('reset-pwd-modal').classList.remove('hidden');
+    }
+    function closeResetPwdModal() {
+      document.getElementById('reset-pwd-modal').classList.add('hidden');
+      resettingUsername = "";
+    }
+    function submitResetPassword() {
+      const newPwd = document.getElementById('new-reset-pwd').value.trim();
+      if (!newPwd) { alert("請輸入新密碼"); return; }
+      if (newPwd.startsWith('0')) { alert("⚠️ 密碼格式錯誤：請勿使用「0」開頭的密碼"); return; }
+      
+      const btn = document.getElementById('submit-reset-pwd-btn');
+      btn.disabled = true; btn.textContent = "處理中...";
+      
+      runGas('resetUserPassword', res => {
+        btn.disabled = false; btn.textContent = "確認更改";
+        if (res.success) {
+          closeResetPwdModal();
+          showAlertModal("✅ 密碼重設成功！請使用新密碼重新登入。");
+          document.forms['login-form'].password.value = ""; 
+        } else {
+          showAlertModal(res.message);
+        }
+      }, showGasError, resettingUsername, newPwd);
+    }
+
     // --- 登入與註冊 ---
     function handleLogin(e, autoUser, autoPass) {
-      if(e) e.preventDefault();
-      hideMessage();
+      if(e) e.preventDefault(); hideMessage();
       const u = autoUser || document.forms['login-form'].username.value.trim();
       const p = autoPass || document.forms['login-form'].password.value.trim();
-
-      // 嚴格驗證是否為 2~4 個中文字
       const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
       if (!chineseNameRegex.test(u)) {
-        if (!e) {
-          localStorage.removeItem('app_user');
-          localStorage.removeItem('app_pass');
-          document.getElementById('auto-login-msg').classList.add('hidden');
-          document.getElementById('auth-section').classList.remove('hidden');
-        }
-        showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700");
-        return; 
+        if (!e) { localStorage.removeItem('app_user'); localStorage.removeItem('app_pass'); document.getElementById('auto-login-msg').classList.add('hidden'); document.getElementById('auth-section').classList.remove('hidden'); }
+        showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700"); return; 
       }
-
       if(e){ document.getElementById('login-btn').textContent = '驗證中...'; document.getElementById('login-btn').disabled=true; }
       
       runGas('checkUserLogin', res => {
         if(e){ document.getElementById('login-btn').textContent = '登入系統'; document.getElementById('login-btn').disabled=false; }
+        
         if(res.success){
           currentUsername = res.username;
           localStorage.setItem('app_user', u); localStorage.setItem('app_pass', p);
@@ -427,7 +418,19 @@
           localStorage.removeItem('app_user'); localStorage.removeItem('app_pass');
           document.getElementById('auto-login-msg').classList.add('hidden');
           document.getElementById('auth-section').classList.remove('hidden');
-          if(e) showMessage(res.message, "bg-red-100 text-red-700");
+          
+          // 【新增】密碼錯誤時的防呆跳窗處理
+          if (res.isWrongPassword) {
+            if (!res.hasUsedReset) {
+              showConfirmModal(`⚠️ 密碼輸入錯誤！\n\n請問您是否忘記密碼，需要進行更改？\n(註：為確保安全，每人僅限更改一次)`, () => {
+                openResetPwdModal(u);
+              }, true); 
+            } else {
+              showMessage("⚠️ 密碼錯誤！且您已用盡唯一一次更改密碼的機會，請聯繫管理員處理。", "bg-red-100 text-red-700");
+            }
+          } else {
+            if(e) showMessage(res.message, "bg-red-100 text-red-700");
+          }
         }
       }, showGasError, u, p);
     }
@@ -435,22 +438,11 @@
     function handleRegister(e) {
       e.preventDefault(); hideMessage();
       const u = e.target.username.value.trim(); const p = e.target.password.value.trim();
-
-      // 嚴格驗證是否為 2~4 個中文字
       const chineseNameRegex = /^[\u4E00-\u9FA5]{2,4}$/;
-      if (!chineseNameRegex.test(u)) {
-         showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700");
-         return; 
-      }
-
-      // 【新增】：檢查密碼是否為 0 開頭
-      if (p.startsWith('0')) {
-         showMessage("⚠️ 密碼格式錯誤：請勿使用「0」開頭的密碼", "bg-red-100 text-red-700");
-         return;
-      }
+      if (!chineseNameRegex.test(u)) { showMessage("⚠️ 帳號格式錯誤：請輸入正確的中文全名", "bg-red-100 text-red-700"); return; }
+      if (p.startsWith('0')) { showMessage("⚠️ 密碼格式錯誤：請勿使用「0」開頭的密碼", "bg-red-100 text-red-700"); return; }
 
       document.getElementById('register-btn').textContent = '處理中...'; document.getElementById('register-btn').disabled=true;
-      
       runGas('registerNewUser', res => {
         document.getElementById('register-btn').textContent = '註冊新帳號'; document.getElementById('register-btn').disabled=false;
         if(res.success){ showMessage("註冊成功，請登入！", "bg-pink-100 text-pink-700"); toggleAuthMode(true); }
@@ -466,7 +458,6 @@
       document.getElementById('user-info-display').textContent = '請登入或註冊以開始點餐';
     }
 
-    // --- 進入系統與載入菜單 ---
     function enterSystem(loginData) {
       document.getElementById('auth-section').classList.add('hidden');
       document.getElementById('auto-login-msg').classList.add('hidden');
@@ -483,75 +474,45 @@
         btn.disabled = true; btn.textContent = "您今日已完成點餐";
         
         runGas('getSystemData', res => {
-           if (res.announcement) {
-             document.getElementById('announcement-text').textContent = res.announcement;
-             document.getElementById('announcement-box').classList.remove('hidden');
-           }
-           if (res.restaurantName) {
-             document.getElementById('restaurant-name-display').textContent = res.restaurantName;
-           }
+           if (res.announcement) { document.getElementById('announcement-text').textContent = res.announcement; document.getElementById('announcement-box').classList.remove('hidden'); }
+           if (res.restaurantName) { document.getElementById('restaurant-name-display').textContent = res.restaurantName; }
         }, showGasError);
-      } else {
-        document.getElementById('already-ordered-block').classList.add('hidden');
-        loadSystemData();
-      }
+      } else { document.getElementById('already-ordered-block').classList.add('hidden'); loadSystemData(); }
     }
 
     function loadSystemData() {
-      document.getElementById('loading-message').classList.remove('hidden');
-      document.getElementById('menu-container').classList.add('hidden');
-      
+      document.getElementById('loading-message').classList.remove('hidden'); document.getElementById('menu-container').classList.add('hidden');
       runGas('getSystemData', res => {
         document.getElementById('loading-message').classList.add('hidden');
         if (res.error) { showMessage(res.message, "bg-red-100 text-red-700"); return; }
-        
-        if (res.announcement) {
-          document.getElementById('announcement-text').textContent = res.announcement;
-          document.getElementById('announcement-box').classList.remove('hidden');
-        }
-
-        if (res.restaurantName) {
-          document.getElementById('restaurant-name-display').textContent = res.restaurantName;
-        }
-
+        if (res.announcement) { document.getElementById('announcement-text').textContent = res.announcement; document.getElementById('announcement-box').classList.remove('hidden'); }
+        if (res.restaurantName) { document.getElementById('restaurant-name-display').textContent = res.restaurantName; }
         if (res.isClosed) {
           const btn = document.getElementById('submit-button');
           btn.disabled = true; btn.textContent = `已超過截單時間 (${res.cutoffStr})`;
-          // ================= 修改按鈕顏色為灰色 (關閉狀態) ====================
           btn.classList.replace('bg-pink-500', 'bg-gray-500');
           document.getElementById('menu-container').innerHTML = '<p class="text-center text-red-500 font-bold p-8">目前非開放點餐時間。</p>';
-          document.getElementById('menu-container').classList.remove('hidden');
-          return;
+          document.getElementById('menu-container').classList.remove('hidden'); return;
         }
-
-        menuData = res.menu;
-        renderMenuCards(menuData);
+        menuData = res.menu; renderMenuCards(menuData);
       }, showGasError);
     }
 
-    // --- 圖文菜單渲染 ---
     function renderMenuCards(items) {
       const container = document.getElementById('menu-list-grid');
       if (items.length === 0) { container.innerHTML = '<p class="text-center text-gray-500">無供應</p>'; }
       else {
         container.innerHTML = items.map(item => {
-          const imgHtml = item.image 
-            ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">`
-            : `<div class="w-full h-full bg-gray-100 flex items-center justify-center text-3xl opacity-50">🍽️</div>`;
-          
+          const imgHtml = item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-gray-100 flex items-center justify-center text-3xl opacity-50">🍽️</div>`;
           return `
           <div class="menu-card flex p-3 rounded-xl shadow-sm hover:shadow-md ring-1 ring-gray-200 bg-white gap-3 cursor-pointer" onclick="handleItemClick('${item.id}')">
             <div class="img-container flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-100 relative shadow-sm">
                 ${imgHtml}
-                <div class="absolute bottom-1 right-1 bg-white rounded-full p-0.5 shadow-sm">
-                    <div class="bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">+</div>
-                </div>
+                <div class="absolute bottom-1 right-1 bg-white rounded-full p-0.5 shadow-sm"><div class="bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">+</div></div>
             </div>
             <div class="flex-grow flex flex-col justify-between py-1 pr-1">
               <div><h3 class="text-lg font-bold text-gray-800 leading-tight">${item.name}</h3></div>
-              <div class="flex justify-between items-end mt-2">
-                <span class="text-lg font-extrabold text-gray-800">NT$ ${item.price}</span>
-              </div>
+              <div class="flex justify-between items-end mt-2"><span class="text-lg font-extrabold text-gray-800">NT$ ${item.price}</span></div>
             </div>
           </div>`;
         }).join('');
@@ -560,74 +521,39 @@
     }
 
     function handleItemClick(id) {
-      const item = menuData.find(i => String(i.id) === String(id));
-      if(!item) return;
-      if (item.type === '套餐' && item.options && Object.keys(item.options).length > 0) {
-        configuringItem = item; openOptionsModal(item, false);
-      } else {
-        addSimpleItemToCart(item, false);
-      }
+      const item = menuData.find(i => String(i.id) === String(id)); if(!item) return;
+      if (item.type === '套餐' && item.options && Object.keys(item.options).length > 0) { configuringItem = item; openOptionsModal(item, false); } 
+      else { addSimpleItemToCart(item, false); }
     }
 
-    // --- 購物車邏輯 ---
     function addSimpleItemToCart(item, isProxy) {
       const targetCart = isProxy ? proxyCart : cartItems;
       targetCart.push({ id: item.id, name: item.name, price: item.price, type: item.type, selections: {} });
-      if(isProxy) renderProxyCart();
-      else { updateCartUI(); showMessage(`已加入：${item.name}`, "bg-pink-100 text-pink-700"); }
+      if(isProxy) renderProxyCart(); else { updateCartUI(); showMessage(`已加入：${item.name}`, "bg-pink-100 text-pink-700"); }
     }
 
-    window.removeCartItem = function(index) {
-      cartItems.splice(index, 1);
-      updateCartUI();
-    }
+    window.removeCartItem = function(index) { cartItems.splice(index, 1); updateCartUI(); }
 
     function updateCartUI() {
-      const listDiv = document.getElementById('cart-list');
-      let total = 0;
-      if(cartItems.length === 0) {
-        listDiv.innerHTML = '<p class="text-sm text-gray-500">尚未選擇。</p>';
-      } else {
+      const listDiv = document.getElementById('cart-list'); let total = 0;
+      if(cartItems.length === 0) { listDiv.innerHTML = '<p class="text-sm text-gray-500">尚未選擇。</p>'; } 
+      else {
         listDiv.innerHTML = cartItems.map((item, index) => {
-          total += item.price;
-          let details = '';
-          if (item.selections && Object.keys(item.selections).length > 0) {
-             details = `<p class="text-xs text-gray-500 mt-1">${Object.values(item.selections).join(' / ')}</p>`;
-          }
-          return `
-            <div class="flex items-center justify-between p-3 bg-white border-b ring-1 ring-gray-100 rounded-lg shadow-sm">
-              <div>
-                <p class="font-bold text-gray-700">${item.name}</p>
-                ${details}
-                <p class="text-sm text-red-500 font-medium mt-1">NT$ ${item.price}</p>
-              </div>
-              <button onclick="removeCartItem(${index})" class="text-gray-400 hover:text-red-600 text-2xl font-bold px-2 remove-btn">&times;</button>
-            </div>
-          `;
+          total += item.price; let details = '';
+          if (item.selections && Object.keys(item.selections).length > 0) { details = `<p class="text-xs text-gray-500 mt-1">${Object.values(item.selections).join(' / ')}</p>`; }
+          return `<div class="flex items-center justify-between p-3 bg-white border-b ring-1 ring-gray-100 rounded-lg shadow-sm"><div><p class="font-bold text-gray-700">${item.name}</p>${details}<p class="text-sm text-red-500 font-medium mt-1">NT$ ${item.price}</p></div><button onclick="removeCartItem(${index})" class="text-gray-400 hover:text-red-600 text-2xl font-bold px-2 remove-btn">&times;</button></div>`;
         }).join('');
       }
       document.getElementById('total-price').textContent = `NT$ ${total}`;
-      const btn = document.getElementById('submit-button');
-      btn.disabled = cartItems.length === 0;
-      btn.textContent = cartItems.length === 0 ? "請選擇餐點" : "確認點餐並提交";
+      const btn = document.getElementById('submit-button'); btn.disabled = cartItems.length === 0; btn.textContent = cartItems.length === 0 ? "請選擇餐點" : "確認點餐並提交";
     }
 
-    // --- Foodpanda Modal 邏輯 ---
     let isProxyModeForModal = false;
     function openOptionsModal(item, isProxy) {
       isProxyModeForModal = isProxy;
-      const imgContainer = document.getElementById('modal-image-container');
-      const headerNoImg = document.getElementById('modal-header-no-img');
-      if (item.image) {
-        document.getElementById('modal-image').src = item.image;
-        imgContainer.classList.remove('hidden'); headerNoImg.classList.add('hidden');
-        document.getElementById('modal-title-with-img').textContent = item.name;
-        document.getElementById('modal-title-with-img').classList.remove('hidden');
-      } else {
-        imgContainer.classList.add('hidden'); headerNoImg.classList.remove('hidden');
-        document.getElementById('modal-title-no-img').textContent = item.name;
-        document.getElementById('modal-title-with-img').classList.add('hidden');
-      }
+      const imgContainer = document.getElementById('modal-image-container'); const headerNoImg = document.getElementById('modal-header-no-img');
+      if (item.image) { document.getElementById('modal-image').src = item.image; imgContainer.classList.remove('hidden'); headerNoImg.classList.add('hidden'); document.getElementById('modal-title-with-img').textContent = item.name; document.getElementById('modal-title-with-img').classList.remove('hidden'); } 
+      else { imgContainer.classList.add('hidden'); headerNoImg.classList.remove('hidden'); document.getElementById('modal-title-no-img').textContent = item.name; document.getElementById('modal-title-with-img').classList.add('hidden'); }
       
       const content = document.getElementById('modal-content'); content.innerHTML = '';
       Object.keys(item.options).forEach(optName => {
@@ -637,82 +563,51 @@
         }).join('');
         content.insertAdjacentHTML('beforeend', `<div><h4 class="text-lg font-bold mb-2 text-gray-800">${optName} <span class="text-red-500 text-xs font-normal ml-1">* 必選</span></h4><div class="space-y-2">${html}</div></div>`);
       });
-      checkModalSelections();
-      document.getElementById('options-modal').classList.remove('hidden');
+      checkModalSelections(); document.getElementById('options-modal').classList.remove('hidden');
     }
 
     function closeOptionsModal() { document.getElementById('options-modal').classList.add('hidden'); configuringItem = null; }
     
     function checkModalSelections() {
-      if(!configuringItem) return;
-      let extra = 0; let allChecked = true;
+      if(!configuringItem) return; let extra = 0; let allChecked = true;
       Object.keys(configuringItem.options).forEach(cat => {
         const sel = document.querySelector(`input[name="option-${cat}"]:checked`);
         if(!sel) allChecked = false; else extra += parseFloat(sel.dataset.extra || 0);
       });
       const btn = document.getElementById('add-to-cart-btn');
-      if(allChecked){ btn.disabled=false; btn.textContent=`確認選擇 (NT$${configuringItem.price + extra})`; }
-      else { btn.disabled=true; btn.textContent="您有選項尚未完成"; }
+      if(allChecked){ btn.disabled=false; btn.textContent=`確認選擇 (NT$${configuringItem.price + extra})`; } else { btn.disabled=true; btn.textContent="您有選項尚未完成"; }
     }
 
     function confirmOptions() {
-      if(!configuringItem) return;
-      let extraTotal = 0; const selections = {};
-      document.querySelectorAll('#modal-content input[type="radio"]:checked').forEach(r => {
-        selections[r.name.replace('option-','')] = r.value; extraTotal += parseFloat(r.dataset.extra||0);
-      });
-      const finalPrice = configuringItem.price + extraTotal;
-      const targetCart = isProxyModeForModal ? proxyCart : cartItems;
-      
+      if(!configuringItem) return; let extraTotal = 0; const selections = {};
+      document.querySelectorAll('#modal-content input[type="radio"]:checked').forEach(r => { selections[r.name.replace('option-','')] = r.value; extraTotal += parseFloat(r.dataset.extra||0); });
+      const finalPrice = configuringItem.price + extraTotal; const targetCart = isProxyModeForModal ? proxyCart : cartItems;
       targetCart.push({ id: configuringItem.id, name: configuringItem.name, price: finalPrice, type: configuringItem.type, selections: selections });
-      
-      if(isProxyModeForModal) renderProxyCart();
-      else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
+      if(isProxyModeForModal) renderProxyCart(); else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
       closeOptionsModal();
     }
 
-    // --- 送出訂單 ---
     function submitOrder() {
       if(cartItems.length===0) return;
-      const total = cartItems.reduce((sum, i) => sum + i.price, 0);
-      const btn = document.getElementById('submit-button');
+      const total = cartItems.reduce((sum, i) => sum + i.price, 0); const btn = document.getElementById('submit-button');
       btn.disabled = true; btn.textContent = "處理中...";
-      
       const itemsForGAS = cartItems.map(i => ({ name: i.name, price: i.price, type: i.type, selections: i.selections }));
       
       runGas('logOrderToSheet', res => {
         if(res.success){
-          showAlertModal("✅ 點餐成功！");
-          btn.textContent = "您今日已完成點餐";
-          document.getElementById('menu-container').classList.add('hidden');
-          document.getElementById('cart-summary').classList.add('hidden');
-          document.getElementById('already-ordered-block').classList.remove('hidden');
-          
+          showAlertModal("✅ 點餐成功！"); btn.textContent = "您今日已完成點餐";
+          document.getElementById('menu-container').classList.add('hidden'); document.getElementById('cart-summary').classList.add('hidden'); document.getElementById('already-ordered-block').classList.remove('hidden');
           let detailsText = itemsForGAS.map(i => `${i.name}`).join('\n');
-          document.getElementById('already-ordered-details').textContent = detailsText;
-          document.getElementById('already-ordered-total').textContent = `總計: NT$ ${total}`;
-          cartItems = [];
-        } else {
-          showAlertModal(res.message);
-          btn.disabled = false; btn.textContent = "確認點餐並提交";
-        }
+          document.getElementById('already-ordered-details').textContent = detailsText; document.getElementById('already-ordered-total').textContent = `總計: NT$ ${total}`; cartItems = [];
+        } else { showAlertModal(res.message); btn.disabled = false; btn.textContent = "確認點餐並提交"; }
       }, showGasError, { username: currentUsername, total: total, items: itemsForGAS });
     }
 
-    // ==========================================
-    // 管理員後台功能
-    // ==========================================
     function showAdminPanel() { document.getElementById('main-container').classList.add('hidden'); document.getElementById('admin-section').classList.remove('hidden'); switchAdminTab('orders'); }
     function closeAdminPanel() { document.getElementById('admin-section').classList.add('hidden'); document.getElementById('main-container').classList.remove('hidden'); }
-    
     function switchAdminTab(tab) {
-      ['orders', 'summary', 'menu', 'direct'].forEach(t => {
-        document.getElementById(`admin-tab-${t}`).classList.add('hidden');
-        document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap";
-      });
-      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
-      // ================= 修改後台頁籤顏色 =====================
-      document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
+      ['orders', 'summary', 'menu', 'direct'].forEach(t => { document.getElementById(`admin-tab-${t}`).classList.add('hidden'); document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap"; });
+      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden'); document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
       if(tab==='orders') loadAdminOrders(); if(tab==='summary') loadAdminSummary(); if(tab==='menu') loadAdminMenuList(); if(tab==='direct') initProxyOrder();
     }
 
@@ -720,7 +615,6 @@
       const div = document.getElementById('admin-order-list'); div.innerHTML = '<p class="text-center text-gray-400">載入中...</p>';
       runGas('getAdminOrders', res => {
         if(res.length===0) { div.innerHTML='<p class="text-center">無訂單</p>'; return; }
-        // ================= 修改繳費按鈕顏色為粉色 =====================
         div.innerHTML = res.map(o => `<div class="bg-white border p-3 rounded shadow-sm"><div class="flex justify-between items-center border-b pb-2 mb-2"><span class="font-bold search-target">${o.user} <span class="text-xs font-normal text-gray-400 ml-2">${o.time}</span></span><button onclick="togglePay(this, ${o.rowIndex})" class="px-3 py-1 rounded-full text-xs font-bold transition ${o.paid?'bg-pink-500 text-white':'bg-gray-200 text-gray-500'}">${o.paid?'已繳費':'未繳費'}</button></div><div class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded">${o.items}</div><div class="text-right font-bold text-red-600 mt-1">總計: $${o.total}</div></div>`).join('');
       }, showGasError);
     }
@@ -731,9 +625,7 @@
     function loadAdminSummary() {
       document.getElementById('admin-summary-list').innerHTML = '<tr><td colspan="2" class="p-4 text-center">計算中...</td></tr>';
       runGas('getSalesSummary', res => {
-        // ================= 修改應收總計顏色為粉色 =====================
-        document.getElementById('admin-grand-total').textContent = `NT$ ${res.grandTotal}`;
-        const l = document.getElementById('admin-summary-list');
+        document.getElementById('admin-grand-total').textContent = `NT$ ${res.grandTotal}`; const l = document.getElementById('admin-summary-list');
         if(!res.items.length) l.innerHTML = '<tr><td colspan="2" class="p-4 text-center">無資料</td></tr>';
         else l.innerHTML = res.items.map(i => `<tr class="hover:bg-gray-50"><td class="p-3 border-b">${i.name}</td><td class="p-3 border-b text-right font-bold text-gray-900">${i.count}</td></tr>`).join('');
       }, showGasError);
@@ -755,50 +647,26 @@
     function confirmDeleteMenu(id, name) { showConfirmModal(`確定刪除「${name}」？`, () => runGas('deleteMenuItem', r=>{showAlertModal(r.message);loadAdminMenuList();loadSystemData();}, showGasError, id), true); }
     
     function submitMenuForm() { 
-      const id = document.getElementById('edit-item-id').value; 
-      const name = document.getElementById('new-item-name').value.trim(); 
-      const price = document.getElementById('new-item-price').value; 
-      const type = document.getElementById('new-item-type').value; 
-      const image = document.getElementById('new-item-image').value.trim(); 
-      
+      const id = document.getElementById('edit-item-id').value; const name = document.getElementById('new-item-name').value.trim(); const price = document.getElementById('new-item-price').value; const type = document.getElementById('new-item-type').value; const image = document.getElementById('new-item-image').value.trim(); 
       if(!name||!price) { showAlertModal("請輸入名稱與價格！"); return; } 
-      
       let optJson = ""; 
       if(type==='套餐') { 
         const resOpt={}; 
         document.querySelectorAll('.option-group').forEach(grp=>{ 
-          const gName=grp.querySelector('.group-name').value.trim(); 
-          if(!gName)return; 
-          const ch=[]; 
-          grp.querySelectorAll('.choice-row').forEach(r=>{ 
-            const cn=r.querySelector('.choice-name').value.trim(); 
-            const cp=parseFloat(r.querySelector('.choice-price').value)||0; 
-            if(cn) ch.push([cn,cp]); 
-          }); 
+          const gName=grp.querySelector('.group-name').value.trim(); if(!gName)return; const ch=[]; 
+          grp.querySelectorAll('.choice-row').forEach(r=>{ const cn=r.querySelector('.choice-name').value.trim(); const cp=parseFloat(r.querySelector('.choice-price').value)||0; if(cn) ch.push([cn,cp]); }); 
           if(ch.length) resOpt[gName]=ch; 
         }); 
         if(Object.keys(resOpt).length) optJson=JSON.stringify(resOpt); 
       } 
-      
-      const btn = document.getElementById('menu-submit-btn'); 
-      btn.disabled=true; btn.textContent="處理中..."; 
-      
+      const btn = document.getElementById('menu-submit-btn'); btn.disabled=true; btn.textContent="處理中..."; 
       const apiAction = id ? 'updateMenuItem' : 'addMenuItemToSheet';
       runGas(apiAction, r => { 
-        btn.disabled=false; 
-        btn.textContent=id?"確認修改":"確認新增"; 
-        if(r.success){
-          showAlertModal(r.message);
-          resetMenuForm();
-          loadAdminMenuList();
-          loadSystemData();
-        } else {
-          showAlertModal(r.message); 
-        }
+        btn.disabled=false; btn.textContent=id?"確認修改":"確認新增"; 
+        if(r.success){ showAlertModal(r.message); resetMenuForm(); loadAdminMenuList(); loadSystemData(); } else { showAlertModal(r.message); }
       }, showGasError, {id:id, name:name, price:parseFloat(price), type:type, options:optJson, image:image}); 
     }
 
-    // 管理者代訂
     let proxyCart = []; let proxyUser = "";
     function initProxyOrder() { proxyCart=[]; proxyUser=""; document.getElementById('proxy-username').value=""; document.getElementById('admin-direct-step-1').classList.remove('hidden'); document.getElementById('admin-direct-step-2').classList.add('hidden'); }
     function startProxyOrder() { const n = document.getElementById('proxy-username').value.trim(); if(!n){showAlertModal("請輸入姓名！");return;} proxyUser=n; document.getElementById('proxy-current-name').textContent=proxyUser; document.getElementById('admin-direct-step-1').classList.add('hidden'); document.getElementById('admin-direct-step-2').classList.remove('hidden'); renderProxyMenu(); renderProxyCart(); }
@@ -812,21 +680,9 @@
     
     function submitProxyOrder() { 
       showConfirmModal(`確定幫「${proxyUser}」送出？`, () => { 
-        const b = document.getElementById('proxy-submit-btn'); 
-        b.textContent="傳送中..."; b.disabled=true; 
-        const total = proxyCart.reduce((s,i)=>s+i.price,0); 
-        
+        const b = document.getElementById('proxy-submit-btn'); b.textContent="傳送中..."; b.disabled=true; const total = proxyCart.reduce((s,i)=>s+i.price,0); 
         runGas('logOrderToSheet', res => {
-          if(res.success){ 
-            showAlertModal(`代點成功！`); 
-            initProxyOrder(); 
-            loadAdminOrders(); 
-            loadAdminSummary(); 
-          } else { 
-            showAlertModal("失敗："+res.message); 
-            b.disabled=false; 
-            b.textContent="確認送出"; 
-          } 
+          if(res.success){ showAlertModal(`代點成功！`); initProxyOrder(); loadAdminOrders(); loadAdminSummary(); } else { showAlertModal("失敗："+res.message); b.disabled=false; b.textContent="確認送出"; } 
         }, showGasError, { username: proxyUser, total: total, items: proxyCart }); 
       }); 
     }
