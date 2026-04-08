@@ -88,7 +88,7 @@
           <div id="menu-container" class="space-y-8 transition-opacity duration-300">
               <div>
                <h3 id="restaurant-name-display" class="text-xl font-bold text-orange-600 border-b pb-2 mb-4">🍽️ 本日供應</h3>
-               <div id="menu-list-grid" class="grid grid-cols-1 gap-4"></div>
+               <div id="menu-list-grid"></div>
               </div>
           </div>
 
@@ -121,7 +121,7 @@
         <div id="modal-content" class="space-y-6"></div>
       </div>
       <div class="p-4 border-t bg-gray-50 flex-shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
-        <button id="add-to-cart-btn" class="w-full py-4 bg-indigo-600 text-white font-bold rounded-lg text-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md" onclick="confirmOptions()">確認選擇</button>
+        <button id="add-to-cart-btn" class="w-full py-4 bg-pink-600 text-white font-bold rounded-lg text-lg hover:bg-pink-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md" onclick="confirmOptions()">確認選擇</button>
       </div>
     </div>
   </div>
@@ -240,6 +240,7 @@
       </div>
       <div class="p-5 overflow-y-auto space-y-4 flex-grow">
         <div class="space-y-3">
+          <div><label class="block text-sm font-bold text-gray-700 mb-1">分類區塊 (例如：水餃、鍋貼) <span class="text-red-500">*</span></label><input type="text" id="edit-item-category" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300"></div>
           <div><label class="block text-sm font-bold text-gray-700 mb-1">品項名稱 <span class="text-red-500">*</span></label><input type="text" id="edit-item-name" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300"></div>
           <div><label class="block text-sm font-bold text-gray-700 mb-1">基本價格 <span class="text-red-500">*</span></label><input type="number" id="edit-item-price" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300" placeholder="0"></div>
           <div><label class="block text-sm font-bold text-gray-700 mb-1">圖片網址 (選填)</label><input type="text" id="edit-item-image" class="w-full p-2 border rounded-lg outline-none focus:ring-2 ring-pink-300 text-sm" placeholder="https://..."></div>
@@ -247,10 +248,10 @@
         <hr>
         <div>
           <div class="flex justify-between items-center mb-2">
-            <label class="block text-base font-bold text-pink-600">🛒 加購與客製化選項</label>
+            <label class="block text-base font-bold text-pink-600">🛒 客製化選項 (可複選)</label>
             <button onclick="addOptionGroup()" class="text-sm bg-pink-100 text-pink-700 px-2 py-1 rounded font-bold hover:bg-pink-200">+ 新增群組</button>
           </div>
-          <p class="text-xs text-gray-500 mb-3">例如：新增「甜度」群組，裡面包含「正常(+0)」、「半糖(+0)」</p>
+          <p class="text-xs text-gray-500 mb-3">例如：新增「數量」群組，裡面包含「5顆(+30)」、「10顆(+60)」等，選項將以多選(Checkbox)呈現。</p>
           <div id="options-builder-container" class="space-y-3"></div>
         </div>
       </div>
@@ -477,13 +478,33 @@
       }, showGasError);
     }
 
+    // 【修改】將菜單依照分類進行分區塊顯示
     function renderMenuCards(items) {
       const container = document.getElementById('menu-list-grid');
-      if (items.length === 0) { container.innerHTML = '<p class="text-center text-gray-500">無供應</p>'; }
-      else {
-        container.innerHTML = items.map(item => {
+      if (items.length === 0) { 
+        container.innerHTML = '<p class="text-center text-gray-500">無供應</p>'; 
+        return; 
+      }
+      
+      const grouped = {};
+      items.forEach(item => {
+        const cat = item.category || '未分類';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(item);
+      });
+
+      let html = '';
+      for (let cat in grouped) {
+        html += `
+          <div class="mb-8">
+            <h3 class="text-xl font-bold text-pink-600 border-b-2 border-pink-200 pb-2 mb-4 flex items-center gap-2">
+              <span class="text-2xl">🥟</span> ${cat}
+            </h3>
+            <div class="grid grid-cols-1 gap-4">
+        `;
+        grouped[cat].forEach(item => {
           const imgHtml = item.image ? `<img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover">` : `<div class="w-full h-full bg-gray-100 flex items-center justify-center text-3xl opacity-50">🍽️</div>`;
-          return `
+          html += `
           <div class="menu-card flex p-3 rounded-xl shadow-sm hover:shadow-md ring-1 ring-gray-200 bg-white gap-3 cursor-pointer" onclick="handleItemClick('${item.id}')">
             <div class="img-container flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-100 relative shadow-sm">
                 ${imgHtml}
@@ -494,8 +515,11 @@
               <div class="flex justify-between items-end mt-2"><span class="text-lg font-extrabold text-gray-800">NT$ ${item.price}</span></div>
             </div>
           </div>`;
-        }).join('');
+        });
+        html += `</div></div>`;
       }
+      
+      container.innerHTML = html;
       document.getElementById('menu-container').classList.remove('hidden');
     }
 
@@ -531,6 +555,7 @@
     }
 
     let isProxyModeForModal = false;
+    // 【修改】將選項從 Radio 單選 改為 Checkbox 多選
     function openOptionsModal(item, isProxy) {
       isProxyModeForModal = isProxy; const imgContainer = document.getElementById('modal-image-container'); const headerNoImg = document.getElementById('modal-header-no-img');
       if (item.image) {
@@ -543,28 +568,42 @@
       Object.keys(item.options).forEach(optName => {
         const html = item.options[optName].map((opt, idx) => {
           const name = Array.isArray(opt) ? opt[0] : opt; const extra = Array.isArray(opt) ? opt[1] : 0;
-          return `<label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"><input type="radio" name="option-${optName}" value="${name}" data-extra="${extra}" onchange="checkModalSelections()" class="form-radio h-5 w-5 text-indigo-600"><span class="ml-3 text-gray-700 font-medium">${name}${extra>0?` (+NT$${extra})`:''}</span></label>`;
+          return `<label class="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition"><input type="checkbox" name="option-${optName}" value="${name}" data-extra="${extra}" onchange="checkModalSelections()" class="form-checkbox h-5 w-5 text-pink-600 rounded"><span class="ml-3 text-gray-700 font-medium">${name}${extra>0?` (+NT$${extra})`:''}</span></label>`;
         }).join('');
-        content.insertAdjacentHTML('beforeend', `<div><h4 class="text-lg font-bold mb-2 text-gray-800">${optName} <span class="text-red-500 text-xs font-normal ml-1">* 必選</span></h4><div class="space-y-2">${html}</div></div>`);
+        content.insertAdjacentHTML('beforeend', `<div><h4 class="text-lg font-bold mb-2 text-gray-800">${optName} <span class="text-pink-500 text-xs font-normal ml-1">* 可複選</span></h4><div class="space-y-2">${html}</div></div>`);
       });
       checkModalSelections(); document.getElementById('options-modal').classList.remove('hidden');
     }
 
     function closeOptionsModal() { document.getElementById('options-modal').classList.add('hidden'); configuringItem = null; }
     
+    // 【修改】改為抓取 Checkbox 的多選計算，預設永遠可以加入購物車 (就算不選選項也可以)
     function checkModalSelections() {
-      if(!configuringItem) return; let extra = 0; let allChecked = true;
-      Object.keys(configuringItem.options).forEach(cat => {
-        const sel = document.querySelector(`input[name="option-${cat}"]:checked`);
-        if(!sel) allChecked = false; else extra += parseFloat(sel.dataset.extra || 0);
+      if(!configuringItem) return; 
+      let extra = 0; 
+      document.querySelectorAll('#modal-content input[type="checkbox"]:checked').forEach(sel => {
+        extra += parseFloat(sel.dataset.extra || 0);
       });
       const btn = document.getElementById('add-to-cart-btn');
-      if(allChecked){ btn.disabled=false; btn.textContent=`確認選擇 (NT$${configuringItem.price + extra})`; } else { btn.disabled=true; btn.textContent="您有選項尚未完成"; }
+      btn.disabled = false;
+      btn.textContent = `確認選擇 (NT$${configuringItem.price + extra})`;
     }
 
+    // 【修改】支援將多個 Checkbox 選項合併存入購物車
     function confirmOptions() {
-      if(!configuringItem) return; let extraTotal = 0; const selections = {};
-      document.querySelectorAll('#modal-content input[type="radio"]:checked').forEach(r => { selections[r.name.replace('option-','')] = r.value; extraTotal += parseFloat(r.dataset.extra||0); });
+      if(!configuringItem) return; 
+      let extraTotal = 0; const selections = {};
+      document.querySelectorAll('#modal-content input[type="checkbox"]:checked').forEach(r => { 
+        const cat = r.name.replace('option-','');
+        if(!selections[cat]) selections[cat] = [];
+        selections[cat].push(r.value);
+        extraTotal += parseFloat(r.dataset.extra||0); 
+      });
+      // 將陣列轉回字串顯示
+      for (let key in selections) {
+        selections[key] = selections[key].join(', ');
+      }
+      
       const finalPrice = configuringItem.price + extraTotal; const targetCart = isProxyModeForModal ? proxyCart : cartItems;
       targetCart.push({ id: configuringItem.id, name: configuringItem.name, price: finalPrice, type: configuringItem.type, selections: selections });
       if(isProxyModeForModal) renderProxyCart(); else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
@@ -590,7 +629,6 @@
     function switchAdminTab(tab) {
       ['orders', 'summary', 'menu', 'direct'].forEach(t => { document.getElementById(`admin-tab-${t}`).classList.add('hidden'); document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap"; });
       document.getElementById(`admin-tab-${tab}`).classList.remove('hidden'); document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
-      // 【修改】此處將 tab==='menu' 對應到新的讀取函數
       if(tab==='orders') loadAdminOrders(); if(tab==='summary') loadAdminSummary(); if(tab==='menu') loadAdminMenuEditor(); if(tab==='direct') initProxyOrder();
     }
 
@@ -616,7 +654,7 @@
     function captureSummary() { const el = document.getElementById('summary-capture-area'); const bg = el.style.backgroundColor; el.style.backgroundColor = "#fff"; html2canvas(el, { scale: 2 }).then(canvas => { el.style.backgroundColor = bg; document.getElementById('preview-img').src = canvas.toDataURL("image/png"); document.getElementById('image-preview-modal').classList.remove('hidden'); }); }
 
     // ==========================================
-    // 【新增】移植過來的菜單編輯系統
+    // 菜單編輯系統 (包含分類欄位)
     // ==========================================
     let adminMenuData = [];
     let editingItemIndex = -1;
@@ -646,6 +684,7 @@
             <div class="flex items-center gap-3">
               ${item.image ? `<img src="${item.image}" class="w-12 h-12 rounded object-cover border">` : `<div class="w-12 h-12 rounded bg-gray-100 flex items-center justify-center text-xl">🍽️</div>`}
               <div>
+                <div class="text-xs text-pink-500 font-bold">${item.category || '未分類'}</div>
                 <p class="font-bold text-gray-800">${item.name}</p>
                 <div class="text-xs text-gray-500 flex gap-2">
                   <span class="text-red-500 font-bold">$${item.price}</span>
@@ -666,6 +705,7 @@
       editingItemIndex = index;
       if (index === -1) {
         document.getElementById('editor-modal-title').textContent = "新增品項";
+        document.getElementById('edit-item-category').value = ""; // 清空分類
         document.getElementById('edit-item-name').value = "";
         document.getElementById('edit-item-price').value = "";
         document.getElementById('edit-item-image').value = "";
@@ -673,6 +713,7 @@
       } else {
         const item = adminMenuData[index];
         document.getElementById('editor-modal-title').textContent = `編輯：${item.name}`;
+        document.getElementById('edit-item-category').value = item.category || "未分類"; // 讀取分類
         document.getElementById('edit-item-name').value = item.name;
         document.getElementById('edit-item-price').value = item.price;
         document.getElementById('edit-item-image').value = item.image || "";
@@ -759,6 +800,7 @@
     function deleteOptionItem(groupName, index) { currentEditOptions[groupName].splice(index, 1); renderOptionsBuilderUI(); }
 
     function saveItemToLocalData() {
+      const category = document.getElementById('edit-item-category').value.trim() || '未分類';
       const name = document.getElementById('edit-item-name').value.trim();
       const price = parseFloat(document.getElementById('edit-item-price').value) || 0;
       const image = document.getElementById('edit-item-image').value.trim();
@@ -773,7 +815,8 @@
           });
         }
       }
-      const newItem = { id: `temp-${Date.now()}`, name, price, image, options: finalOptions };
+      // 將 category 存入物件
+      const newItem = { id: `temp-${Date.now()}`, category, name, price, image, options: finalOptions };
       if (editingItemIndex === -1) adminMenuData.push(newItem);
       else adminMenuData[editingItemIndex] = newItem;
       
@@ -793,19 +836,18 @@
         btn.disabled = false; btn.innerHTML = `☁️ 將菜單儲存至雲端試算表`;
         if (res.success) {
            showAlertModal(res.message);
-           loadSystemData(); // 重整前端載入最新的菜單
+           loadSystemData(); 
         } else {
            showAlertModal(res.message);
         }
       }, showGasError, adminMenuData);
     }
-    // ==========================================
 
     let proxyCart = []; let proxyUser = "";
     function initProxyOrder() { proxyCart=[]; proxyUser=""; document.getElementById('proxy-username').value=""; document.getElementById('admin-direct-step-1').classList.remove('hidden'); document.getElementById('admin-direct-step-2').classList.add('hidden'); }
     function startProxyOrder() { const n = document.getElementById('proxy-username').value.trim(); if(!n){showAlertModal("請輸入姓名！");return;} proxyUser=n; document.getElementById('proxy-current-name').textContent=proxyUser; document.getElementById('admin-direct-step-1').classList.add('hidden'); document.getElementById('admin-direct-step-2').classList.remove('hidden'); renderProxyMenu(); renderProxyCart(); }
     function cancelProxyOrder() { showConfirmModal("確定結束代點？", ()=>initProxyOrder(), true); }
-    function renderProxyMenu() { const c = document.getElementById('admin-direct-menu-list'); if(!menuData || menuData.length===0){ c.innerHTML='<p class="text-center text-gray-500">無菜單資料</p>'; return; } c.innerHTML = menuData.map(item => `<div class="flex justify-between items-center p-3 rounded-lg shadow-sm border bg-white"><div><div class="font-bold">${item.name}</div><div class="text-red-500 font-bold">NT$ ${item.price}</div></div><button onclick="handleItemClick('${item.id}', true)" class="bg-indigo-600 text-white w-8 h-8 rounded-full font-bold">+</button></div>`).join(''); }
+    function renderProxyMenu() { const c = document.getElementById('admin-direct-menu-list'); if(!menuData || menuData.length===0){ c.innerHTML='<p class="text-center text-gray-500">無菜單資料</p>'; return; } c.innerHTML = menuData.map(item => `<div class="flex justify-between items-center p-3 rounded-lg shadow-sm border bg-white mb-2"><div><div class="text-xs text-pink-500 font-bold">${item.category || '未分類'}</div><div class="font-bold">${item.name}</div><div class="text-red-500 font-bold">NT$ ${item.price}</div></div><button onclick="handleItemClick('${item.id}', true)" class="bg-indigo-600 text-white w-8 h-8 rounded-full font-bold">+</button></div>`).join(''); }
     
     const originalHandleItemClick = handleItemClick;
     handleItemClick = function(id, isProxy=false) { if(!isProxy) return originalHandleItemClick(id); const item = menuData.find(i => String(i.id) === String(id)); if(!item) return; if (item.type === '套餐' && item.options && Object.keys(item.options).length > 0) { configuringItem = item; openOptionsModal(item, true); } else { addSimpleItemToCart(item, true); } }
