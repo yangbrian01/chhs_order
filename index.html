@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>線上點餐系統</title>
+  <title>風岡線上點餐 - 櫻花風格版</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
-    body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #f3ffec; -webkit-tap-highlight-color: transparent; }
+    /* ==================================================== */
+    /* 修改背景色為櫻花粉白 ==================================== */
+    /* ==================================================== */
+    body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #fff0f6; -webkit-tap-highlight-color: transparent; position: relative; overflow-x: hidden; }
     button { touch-action: manipulation; cursor: pointer; position: relative; z-index: 10; user-select: none; }
     input[type='number']::-webkit-inner-spin-button, input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    .loading-spinner { border-top-color: #34d399; border-radius: 50%; width: 1.5rem; height: 1.5rem; animation: spin 1s linear infinite; }
+    
+    /* ==================================================== */
+    /* 載入中 Spinner 修改為粉色 ============================= */
+    /* ==================================================== */
+    .loading-spinner { border-top-color: #f472b6; border-radius: 50%; width: 1.5rem; height: 1.5rem; animation: spin 1s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.6); z-index: 9999 !important; display: flex; justify-content: center; align-items: center; padding: 1rem; }
     
@@ -25,14 +32,48 @@
     .menu-card:active { transform: scale(0.98); }
     .img-container img { transition: transform 0.3s ease; }
     .menu-card:hover .img-container img { transform: scale(1.05); }
+
+    /* ================= 櫻花飄落特效 CSS (整合自 26TCd) ================= */
+    .sakura-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none; /* 讓花瓣不會擋住使用者的點擊 */
+      z-index: 5; /* 讓櫻花飄在卡片上方 */
+      overflow: hidden;
+    }
+    .sakura-petal {
+      position: absolute;
+      top: -20%; /* 確保一開始絕對在畫面外 */
+      opacity: 0; /* 預設完全透明 */
+      background: linear-gradient(135deg, #ffb7b2, #fbcfe8);
+      border-radius: 15px 0 15px 0;
+      animation: fall linear infinite, sway ease-in-out infinite alternate;
+      animation-fill-mode: both;
+      box-shadow: 0px 2px 5px rgba(255, 183, 178, 0.3);
+    }
+    
+    @keyframes fall {
+      0% { top: -20%; opacity: 0; }
+      10% { opacity: 0.85; }
+      80% { opacity: 0.85; }
+      100% { top: 110%; opacity: 0; }
+    }
+    
+    @keyframes sway {
+      0% { transform: translateX(0px) rotate(0deg); }
+      100% { transform: translateX(40px) rotate(60deg); }
+    }
+    /* ==================================================== */
   </style>
 </head>
 <body class="p-4 sm:p-8 min-h-screen flex flex-col items-center justify-start relative">
 
-  <div id="main-container" class="w-full max-w-xl bg-white shadow-2xl rounded-2xl p-4 sm:p-8 space-y-6 ring-4 ring-green-300/50 relative flex flex-col min-h-[80vh]">
+  <div class="sakura-container" id="sakura-container"></div>
+  <div id="main-container" class="w-full max-w-xl bg-white shadow-2xl rounded-2xl p-4 sm:p-8 space-y-6 ring-4 ring-pink-300/50 relative z-10 flex flex-col min-h-[80vh]">
     <div class="flex-grow space-y-6">
         <header class="text-center pb-4 border-b border-gray-200">
-          <h1 class="text-4xl font-extrabold text-green-700">🍜 風岡線上點餐 🍰</h1>
+          <h1 class="text-4xl font-extrabold text-pink-700">🍜 風岡線上點餐 🍰</h1>
           <p id="user-info-display" class="text-sm mt-2 text-gray-500">請登入或註冊以開始點餐</p>
         </header>
 
@@ -42,14 +83,14 @@
         </div>
 
         <div id="message-box" class="hidden"></div>
-        <div id="auto-login-msg" class="hidden text-center text-gray-500 py-4"><div class="loading-spinner border-4 border-gray-200 border-t-green-500 inline-block mb-2"></div><p>登入中...</p></div>
+        <div id="auto-login-msg" class="hidden text-center text-gray-500 py-4"><div class="loading-spinner border-4 border-gray-200 border-t-pink-500 inline-block mb-2"></div><p>登入中...</p></div>
 
         <section id="auth-section" class="space-y-6 pt-2">
             <h2 id="auth-title" class="text-2xl font-bold text-center text-gray-700">使用者登入</h2>
             <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
-                <input type="text" name="username" placeholder="帳號名稱（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
-                <input type="password" name="password" placeholder="密碼" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-green-500 focus:border-green-500 transition text-lg font-bold text-center text-gray-700">
-                <button type="submit" id="login-btn" class="w-full py-4 bg-green-600 text-white font-bold rounded-xl shadow-md hover:bg-green-700 transition duration-200 text-lg">登入系統</button>
+                <input type="text" name="username" placeholder="帳號名稱（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 transition text-lg font-bold text-center text-gray-700">
+                <input type="password" name="password" placeholder="密碼" required class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-pink-500 focus:border-pink-500 transition text-lg font-bold text-center text-gray-700">
+                <button type="submit" id="login-btn" class="w-full py-4 bg-pink-600 text-white font-bold rounded-xl shadow-md hover:bg-pink-700 transition duration-200 text-lg">登入系統</button>
             </form>
             <form id="register-form" onsubmit="handleRegister(event)" class="space-y-4 hidden">
                 <input type="text" name="username" placeholder="建立帳號（需為中文全名）" required pattern="^[\u4E00-\u9FA5]{2,4}$" title="請輸入正確的中文全名" class="w-full p-4 border-2 border-gray-200 rounded-xl focus:ring-indigo-500 transition text-lg font-bold text-center">
@@ -68,7 +109,7 @@
               </div>
           </div>
           
-          <div id="loading-message" class="text-center text-gray-400 p-8 hidden"><div class="loading-spinner border-4 border-gray-200 border-t-green-500 inline-block"></div> 載入菜單中...</div>
+          <div id="loading-message" class="text-center text-gray-400 p-8 hidden"><div class="loading-spinner border-4 border-gray-200 border-t-pink-500 inline-block"></div> 載入菜單中...</div>
           
           <div id="already-ordered-block" class="hidden p-5 bg-blue-50 border border-blue-200 rounded-xl shadow-sm">
              <p class="font-bold mb-3 text-lg text-blue-800 flex items-center gap-2"><span class="text-2xl">✅</span> 您已完成點餐</p>
@@ -77,10 +118,10 @@
           </div>
 
           <div id="menu-container" class="space-y-8 transition-opacity duration-300">
-             <div>
+              <div>
                <h3 id="restaurant-name-display" class="text-xl font-bold text-orange-600 border-b pb-2 mb-4">🍽️ 本日供應</h3>
                <div id="menu-list-grid" class="grid grid-cols-1 gap-4"></div>
-             </div>
+              </div>
           </div>
 
           <div id="cart-summary" class="pt-6 border-t border-gray-200 space-y-4">
@@ -88,9 +129,9 @@
               <div id="cart-list" class="space-y-3"><p class="text-sm text-gray-500">尚未選擇。</p></div>
           </div>
           
-          <div class="pt-6 border-t border-green-200 space-y-4">
+          <div class="pt-6 border-t border-pink-200 space-y-4">
               <div class="flex justify-between items-center text-3xl font-extrabold"><span>總計:</span><span id="total-price" class="text-red-600">NT$ 0</span></div>
-              <button id="submit-button" onclick="submitOrder()" disabled class="w-full py-4 px-4 bg-green-500 text-white font-bold text-lg rounded-xl shadow-xl hover:bg-green-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">請選擇餐點</button>
+              <button id="submit-button" onclick="submitOrder()" disabled class="w-full py-4 px-4 bg-pink-500 text-white font-bold text-lg rounded-xl shadow-xl hover:bg-pink-600 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed">請選擇餐點</button>
           </div>
         </section>
     </div>
@@ -140,13 +181,13 @@
   <section id="admin-section" class="hidden fixed inset-0 w-full h-full bg-gray-100 z-50 flex flex-col">
     <div class="bg-white shadow-sm p-4 flex-none z-10 border-b">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
-          <h2 class="text-xl sm:text-2xl font-bold text-red-700">🔧 後台管理系統</h2>
+          <h2 class="text-xl sm:text-2xl font-bold text-pink-700">🔧 後台管理系統</h2>
           <button onclick="closeAdminPanel()" class="px-4 py-2 bg-gray-200 rounded-lg text-sm font-bold hover:bg-gray-300">返回</button>
         </div>
     </div>
     <div class="bg-white border-b flex-none z-10">
       <div class="max-w-4xl mx-auto px-4 flex space-x-2 overflow-x-auto">
-        <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="px-4 py-3 text-red-600 border-b-2 border-red-600 font-bold whitespace-nowrap">名單管理</button>
+        <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap">名單管理</button>
         <button onclick="switchAdminTab('summary')" id="tab-btn-summary" class="px-4 py-3 text-gray-500 whitespace-nowrap">訂購統計</button>
         <button onclick="switchAdminTab('menu')" id="tab-btn-menu" class="px-4 py-3 text-gray-500 whitespace-nowrap">菜單編輯</button>
         <button onclick="switchAdminTab('direct')" id="tab-btn-direct" class="px-4 py-3 text-gray-500 whitespace-nowrap">管理者代訂</button>
@@ -157,8 +198,8 @@
       <div class="max-w-4xl mx-auto space-y-6">
         <div id="admin-tab-orders" class="space-y-4">
           <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-             <input type="text" id="order-search-input" oninput="filterOrders()" placeholder="🔍 搜尋姓名..." class="p-2 border rounded-lg outline-none w-1/2">
-             <button onclick="confirmResetOrders()" class="bg-red-600 text-white px-4 py-2 rounded shadow text-sm hover:bg-red-700 font-bold">⚠️ 清空紀錄</button>
+              <input type="text" id="order-search-input" oninput="filterOrders()" placeholder="🔍 搜尋姓名..." class="p-2 border rounded-lg outline-none w-1/2">
+              <button onclick="confirmResetOrders()" class="bg-red-600 text-white px-4 py-2 rounded shadow text-sm hover:bg-red-700 font-bold">⚠️ 清空紀錄</button>
           </div>
           <div id="admin-order-list" class="space-y-2 pb-10"></div>
         </div>
@@ -166,9 +207,9 @@
         <div id="admin-tab-summary" class="hidden space-y-4">
           <div class="flex justify-end"><button onclick="captureSummary()" class="px-4 py-2 bg-blue-600 text-white text-sm font-bold rounded-lg shadow">📸 匯出統計圖</button></div>
           <div id="summary-capture-area" class="space-y-4 p-2 bg-white rounded-xl">
-            <div class="bg-green-50 p-6 rounded-xl text-center shadow-inner border border-green-100">
-               <p class="text-gray-600 font-medium">總計應收金額</p>
-               <p id="admin-grand-total" class="text-4xl font-extrabold text-green-700 mt-2">NT$ 0</p>
+            <div class="bg-pink-50 p-6 rounded-xl text-center shadow-inner border border-pink-100">
+                <p class="text-gray-600 font-medium">總計應收金額</p>
+                <p id="admin-grand-total" class="text-4xl font-extrabold text-pink-700 mt-2">NT$ 0</p>
             </div>
             <table class="w-full text-left text-sm bg-white border rounded-lg"><tbody id="admin-summary-list" class="divide-y divide-gray-100"></tbody></table>
           </div>
@@ -177,8 +218,8 @@
         <div id="admin-tab-menu" class="hidden space-y-6 pb-20">
           <div class="bg-white p-5 rounded-lg border shadow-sm space-y-4">
               <div class="flex justify-between items-center border-b pb-2">
-                 <h3 id="form-title" class="text-lg font-bold">新增餐點</h3>
-                 <button id="cancel-edit-btn" onclick="resetMenuForm()" class="hidden text-sm text-gray-500 underline">取消編輯</button>
+                  <h3 id="form-title" class="text-lg font-bold">新增餐點</h3>
+                  <button id="cancel-edit-btn" onclick="resetMenuForm()" class="hidden text-sm text-gray-500 underline">取消編輯</button>
               </div>
               <input type="hidden" id="edit-item-id" value="">
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -196,12 +237,12 @@
               </div>
               <div id="combo-options-area" class="hidden border-t pt-4 space-y-4">
                   <div class="flex justify-between items-center">
-                     <p class="text-sm text-gray-600 font-bold">套餐選項</p>
-                     <button onclick="addOptionGroup()" class="text-sm text-indigo-600 font-bold">+ 新增類別</button>
+                      <p class="text-sm text-gray-600 font-bold">套餐選項</p>
+                      <button onclick="addOptionGroup()" class="text-sm text-indigo-600 font-bold">+ 新增類別</button>
                   </div>
                   <div id="options-container" class="space-y-4"></div>
               </div>
-              <button id="menu-submit-btn" onclick="submitMenuForm()" class="w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow">確認新增</button>
+              <button id="menu-submit-btn" onclick="submitMenuForm()" class="w-full py-3 bg-pink-600 text-white font-bold rounded-lg shadow">確認新增</button>
           </div>
           <div class="bg-gray-50 p-4 rounded-lg border"><div id="admin-menu-list" class="space-y-2"></div></div>
         </div>
@@ -214,8 +255,8 @@
           </div>
           <div id="admin-direct-step-2" class="hidden space-y-4">
               <div class="bg-indigo-600 text-white p-4 rounded-lg flex justify-between items-center">
-                 <div><span class="text-xs">正在幫：</span><span id="proxy-current-name" class="font-bold text-xl ml-1"></span> 點餐</div>
-                 <button onclick="cancelProxyOrder()" class="bg-white text-indigo-600 text-xs font-bold px-3 py-1.5 rounded">結束</button>
+                  <div><span class="text-xs">正在幫：</span><span id="proxy-current-name" class="font-bold text-xl ml-1"></span> 點餐</div>
+                  <button onclick="cancelProxyOrder()" class="bg-white text-indigo-600 text-xs font-bold px-3 py-1.5 rounded">結束</button>
               </div>
               <div id="admin-direct-menu-list" class="space-y-2"></div>
               <div class="bg-white border-t-4 border-indigo-500 p-4 rounded-lg shadow space-y-4">
@@ -231,9 +272,9 @@
 
   <script>
     // ==========================================
-    //  ⚠️ 必填：請將下方替換為你的 GAS 網頁應用程式網址 ⚠️
+    // ⚠️ 必填：請將下方替換為你的 GAS 網頁應用程式網址 ⚠️
     // ==========================================
-    const GAS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbyMQ6GViopoUg1eltqGcHmkwg5In793PCQT2Ra2ijJQMhISlAwHOEs3r7Bhz920-rjJ5Q/exec'; 
+    const GAS_WEB_APP_URL = '你的_GAS_部署_URL'; 
 
     // --- 共用 API 呼叫函數 ---
     function runGas(funcName, onSuccess, onFail, ...args) {
@@ -256,6 +297,35 @@
             if (onFail) onFail(err);
         });
     }
+
+    // ================= 櫻花飄落特效 JS (整合自 26TCd) =================
+    function createSakura() {
+      const container = document.getElementById('sakura-container');
+      const petalCount = 40; 
+      
+      for (let i = 0; i < petalCount; i++) {
+        const petal = document.createElement('div');
+        petal.className = 'sakura-petal';
+        
+        const size = Math.random() * 10 + 8;
+        const startPositionLeft = Math.random() * 100;
+        const fallDuration = Math.random() * 5 + 6;
+        const swayDuration = Math.random() * 2 + 2;
+        
+        // 🌟 改成負數延遲，讓動畫預先開跑，避免全部擠在頂端！
+        const fallDelay = -(Math.random() * fallDuration);
+        const swayDelay = -(Math.random() * swayDuration);
+
+        petal.style.width = `${size}px`;
+        petal.style.height = `${size * 1.3}px`;
+        petal.style.left = `${startPositionLeft}vw`;
+        petal.style.animationDuration = `${fallDuration}s, ${swayDuration}s`;
+        petal.style.animationDelay = `${fallDelay}s, ${swayDelay}s`;
+
+        container.appendChild(petal);
+      }
+    }
+    // ====================================================
 
     function showGasError(err) {
         showAlertModal(`伺服器連線失敗: ${err.message}`);
@@ -283,7 +353,8 @@
         document.getElementById('system-modal-icon').textContent = "✅";
         const confirmBtn = document.getElementById('system-modal-confirm');
         confirmBtn.onclick = closeSystemModal;
-        confirmBtn.className = "flex-1 py-2 bg-green-600 text-white rounded-lg font-bold";
+        // ================= 修改提示框按鈕顏色為粉色 =====================
+        confirmBtn.className = "flex-1 py-2 bg-pink-600 text-white rounded-lg font-bold";
         document.getElementById('system-modal-cancel').classList.add('hidden');
         document.getElementById('system-modal').classList.remove('hidden');
     }
@@ -298,6 +369,9 @@
 
     // --- 初始化 ---
     window.onload = () => {
+      // 🌟 初始化櫻花飄落
+      createSakura();
+
       const savedUser = localStorage.getItem('app_user');
       const savedPass = localStorage.getItem('app_pass');
       if (savedUser && savedPass) {
@@ -314,7 +388,8 @@
       document.getElementById('register-form').classList.toggle('hidden', isLogin);
       document.getElementById('auth-title').textContent = isLogin ? '使用者登入' : '註冊新帳號';
       const link = document.getElementById('auth-toggle-link');
-      link.innerHTML = isLogin ? '還沒帳號？<span class="text-indigo-500 cursor-pointer font-bold">點此註冊</span>' : '已有帳號？<span class="text-green-500 cursor-pointer font-bold">點此登入</span>';
+      // ================= 修改切換連結顏色為粉色 =====================
+      link.innerHTML = isLogin ? '還沒帳號？<span class="text-indigo-500 cursor-pointer font-bold">點此註冊</span>' : '已有帳號？<span class="text-pink-500 cursor-pointer font-bold">點此登入</span>';
       link.onclick = () => toggleAuthMode(!isLogin);
       hideMessage();
     }
@@ -378,7 +453,7 @@
       
       runGas('registerNewUser', res => {
         document.getElementById('register-btn').textContent = '註冊新帳號'; document.getElementById('register-btn').disabled=false;
-        if(res.success){ showMessage("註冊成功，請登入！", "bg-green-100 text-green-700"); toggleAuthMode(true); }
+        if(res.success){ showMessage("註冊成功，請登入！", "bg-pink-100 text-pink-700"); toggleAuthMode(true); }
         else { showMessage(res.message, "bg-red-100 text-red-700"); }
       }, showGasError, u, p);
     }
@@ -442,7 +517,8 @@
         if (res.isClosed) {
           const btn = document.getElementById('submit-button');
           btn.disabled = true; btn.textContent = `已超過截單時間 (${res.cutoffStr})`;
-          btn.classList.replace('bg-green-500', 'bg-gray-500');
+          // ================= 修改按鈕顏色為灰色 (關閉狀態) ====================
+          btn.classList.replace('bg-pink-500', 'bg-gray-500');
           document.getElementById('menu-container').innerHTML = '<p class="text-center text-red-500 font-bold p-8">目前非開放點餐時間。</p>';
           document.getElementById('menu-container').classList.remove('hidden');
           return;
@@ -468,7 +544,7 @@
             <div class="img-container flex-shrink-0 w-24 h-24 rounded-lg overflow-hidden border border-gray-100 relative shadow-sm">
                 ${imgHtml}
                 <div class="absolute bottom-1 right-1 bg-white rounded-full p-0.5 shadow-sm">
-                   <div class="bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">+</div>
+                    <div class="bg-orange-500 text-white w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold">+</div>
                 </div>
             </div>
             <div class="flex-grow flex flex-col justify-between py-1 pr-1">
@@ -498,7 +574,7 @@
       const targetCart = isProxy ? proxyCart : cartItems;
       targetCart.push({ id: item.id, name: item.name, price: item.price, type: item.type, selections: {} });
       if(isProxy) renderProxyCart();
-      else { updateCartUI(); showMessage(`已加入：${item.name}`, "bg-green-100 text-green-700"); }
+      else { updateCartUI(); showMessage(`已加入：${item.name}`, "bg-pink-100 text-pink-700"); }
     }
 
     window.removeCartItem = function(index) {
@@ -591,7 +667,7 @@
       targetCart.push({ id: configuringItem.id, name: configuringItem.name, price: finalPrice, type: configuringItem.type, selections: selections });
       
       if(isProxyModeForModal) renderProxyCart();
-      else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-green-100 text-green-700"); }
+      else { updateCartUI(); showMessage(`已選擇：${configuringItem.name}`, "bg-pink-100 text-pink-700"); }
       closeOptionsModal();
     }
 
@@ -635,7 +711,8 @@
         document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap";
       });
       document.getElementById(`admin-tab-${tab}`).classList.remove('hidden');
-      document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-red-600 border-b-2 border-red-600 font-bold whitespace-nowrap";
+      // ================= 修改後台頁籤顏色 =====================
+      document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
       if(tab==='orders') loadAdminOrders(); if(tab==='summary') loadAdminSummary(); if(tab==='menu') loadAdminMenuList(); if(tab==='direct') initProxyOrder();
     }
 
@@ -643,16 +720,18 @@
       const div = document.getElementById('admin-order-list'); div.innerHTML = '<p class="text-center text-gray-400">載入中...</p>';
       runGas('getAdminOrders', res => {
         if(res.length===0) { div.innerHTML='<p class="text-center">無訂單</p>'; return; }
-        div.innerHTML = res.map(o => `<div class="bg-white border p-3 rounded shadow-sm"><div class="flex justify-between items-center border-b pb-2 mb-2"><span class="font-bold search-target">${o.user} <span class="text-xs font-normal text-gray-400 ml-2">${o.time}</span></span><button onclick="togglePay(this, ${o.rowIndex})" class="px-3 py-1 rounded-full text-xs font-bold transition ${o.paid?'bg-green-500 text-white':'bg-gray-200 text-gray-500'}">${o.paid?'已繳費':'未繳費'}</button></div><div class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded">${o.items}</div><div class="text-right font-bold text-red-600 mt-1">總計: $${o.total}</div></div>`).join('');
+        // ================= 修改繳費按鈕顏色為粉色 =====================
+        div.innerHTML = res.map(o => `<div class="bg-white border p-3 rounded shadow-sm"><div class="flex justify-between items-center border-b pb-2 mb-2"><span class="font-bold search-target">${o.user} <span class="text-xs font-normal text-gray-400 ml-2">${o.time}</span></span><button onclick="togglePay(this, ${o.rowIndex})" class="px-3 py-1 rounded-full text-xs font-bold transition ${o.paid?'bg-pink-500 text-white':'bg-gray-200 text-gray-500'}">${o.paid?'已繳費':'未繳費'}</button></div><div class="text-sm text-gray-600 whitespace-pre-line bg-gray-50 p-2 rounded">${o.items}</div><div class="text-right font-bold text-red-600 mt-1">總計: $${o.total}</div></div>`).join('');
       }, showGasError);
     }
     function filterOrders() { const f = document.getElementById('order-search-input').value.toUpperCase(); Array.from(document.getElementById('admin-order-list').children).forEach(c => c.classList.toggle('hidden', c.querySelector('.search-target').innerText.toUpperCase().indexOf(f) === -1)); }
-    function togglePay(btn, row) { const p = btn.innerText === '已繳費'; btn.innerText = p ? '未繳費' : '已繳費'; btn.className = `px-3 py-1 rounded-full text-xs font-bold transition ${p ? 'bg-gray-200 text-gray-500' : 'bg-green-500 text-white'}`; runGas('togglePaymentStatus', ()=>{}, showGasError, row, p); }
+    function togglePay(btn, row) { const p = btn.innerText === '已繳費'; btn.innerText = p ? '未繳費' : '已繳費'; btn.className = `px-3 py-1 rounded-full text-xs font-bold transition ${p ? 'bg-gray-200 text-gray-500' : 'bg-pink-500 text-white'}`; runGas('togglePaymentStatus', ()=>{}, showGasError, row, p); }
     function confirmResetOrders() { showConfirmModal("確定要清空本次所有紀錄嗎？", () => runGas('resetAllOrders', r => { showAlertModal(r.message); loadAdminOrders(); }, showGasError), true); }
 
     function loadAdminSummary() {
       document.getElementById('admin-summary-list').innerHTML = '<tr><td colspan="2" class="p-4 text-center">計算中...</td></tr>';
       runGas('getSalesSummary', res => {
+        // ================= 修改應收總計顏色為粉色 =====================
         document.getElementById('admin-grand-total').textContent = `NT$ ${res.grandTotal}`;
         const l = document.getElementById('admin-summary-list');
         if(!res.items.length) l.innerHTML = '<tr><td colspan="2" class="p-4 text-center">無資料</td></tr>';
@@ -669,7 +748,7 @@
       }, showGasError);
     }
     function editMenuItem(id, name, price, type, optStr, image) { document.getElementById('edit-item-id').value = id; document.getElementById('new-item-name').value = name; document.getElementById('new-item-price').value = price; document.getElementById('new-item-type').value = type; document.getElementById('new-item-image').value = image; document.getElementById('form-title').textContent = "修改餐點"; document.getElementById('cancel-edit-btn').classList.remove('hidden'); const sBtn = document.getElementById('menu-submit-btn'); sBtn.textContent = "確認修改"; sBtn.className = "w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow"; const area = document.getElementById('combo-options-area'); const container = document.getElementById('options-container'); container.innerHTML = ''; if(type==='套餐'){ area.classList.remove('hidden'); try{ const opt = JSON.parse(decodeURIComponent(optStr)); Object.keys(opt).forEach(grp=>{ const gid=Date.now()+Math.random().toString().substr(2,5); addOptionGroup(gid, grp); opt[grp].forEach(ch=>addChoiceRow(gid, ch[0], ch[1])); }); if(Object.keys(opt).length===0) addOptionGroup(); }catch(e){addOptionGroup();} } else { area.classList.add('hidden'); } }
-    function resetMenuForm() { document.getElementById('edit-item-id').value=''; document.getElementById('new-item-name').value=''; document.getElementById('new-item-price').value=''; document.getElementById('new-item-image').value=''; document.getElementById('new-item-type').value='單點'; document.getElementById('form-title').textContent="新增餐點"; document.getElementById('cancel-edit-btn').classList.add('hidden'); const sBtn = document.getElementById('menu-submit-btn'); sBtn.textContent = "確認新增"; sBtn.className = "w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow"; toggleMenuType(); document.getElementById('options-container').innerHTML=''; }
+    function resetMenuForm() { document.getElementById('edit-item-id').value=''; document.getElementById('new-item-name').value=''; document.getElementById('new-item-price').value=''; document.getElementById('new-item-image').value=''; document.getElementById('new-item-type').value='單點'; document.getElementById('form-title').textContent="新增餐點"; document.getElementById('cancel-edit-btn').classList.add('hidden'); const sBtn = document.getElementById('menu-submit-btn'); sBtn.textContent = "確認新增"; sBtn.className = "w-full py-3 bg-pink-600 text-white font-bold rounded-lg shadow"; toggleMenuType(); document.getElementById('options-container').innerHTML=''; }
     function toggleMenuType() { document.getElementById('combo-options-area').classList.toggle('hidden', document.getElementById('new-item-type').value!=='套餐'); if(document.getElementById('new-item-type').value==='套餐' && document.getElementById('options-container').children.length===0) addOptionGroup(); }
     function addOptionGroup(specId=null, defName='') { const gid=specId||Date.now(); document.getElementById('options-container').insertAdjacentHTML('beforeend', `<div class="bg-gray-50 p-3 rounded border relative option-group" id="group-${gid}"><button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-400 text-xs">刪除</button><div class="mb-2"><label class="text-xs font-bold text-gray-500">選項類別名稱</label><input type="text" class="group-name w-full p-1 border rounded text-sm" value="${defName}"></div><div class="choices-list space-y-2 pl-2 border-l-2"></div><button onclick="addChoiceRow('${gid}')" class="mt-2 text-xs text-blue-500 font-bold">+ 新增細項</button></div>`); if(!specId) addChoiceRow(gid); }
     function addChoiceRow(gid, defName='', defPrice=0) { document.getElementById(`group-${gid}`).querySelector('.choices-list').insertAdjacentHTML('beforeend', `<div class="choice-row flex gap-2"><input type="text" class="choice-name w-2/3 p-1 border rounded text-sm" value="${defName}" placeholder="名稱"><input type="number" class="choice-price w-1/3 p-1 border rounded text-sm" value="${defPrice}" placeholder="加價"><button onclick="this.parentElement.remove()" class="text-gray-400">×</button></div>`); }
