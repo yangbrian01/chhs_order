@@ -312,7 +312,7 @@
     function showGasError(err) { showAlertModal(`伺服器連線失敗: ${err.message}`); }
 
     let currentUsername = null; let menuData = []; let cartItems = []; let configuringItem = null; let onConfirmCallback = null;
-    let isSystemClosed = false; // 【新增】記錄系統結單狀態
+    let isSystemClosed = false; 
 
     function showConfirmModal(msg, cb, isDanger=false) {
         document.getElementById('system-modal-message').textContent = msg;
@@ -474,14 +474,16 @@
         if (res.announcement) { document.getElementById('announcement-text').textContent = res.announcement; document.getElementById('announcement-box').classList.remove('hidden'); }
         if (res.restaurantName) { document.getElementById('restaurant-name-display').textContent = res.restaurantName; }
         
-        isSystemClosed = res.isClosed; // 記錄系統是否結單
+        isSystemClosed = res.isClosed; 
+        // 【修正】不管有沒有結單，都要先把菜單存進記憶體，這樣管理員才看得到！
+        menuData = res.menu || []; 
 
         if (res.isClosed) {
           const btn = document.getElementById('submit-button'); btn.disabled = true; btn.textContent = `已超過截單時間 (${res.cutoffStr})`; btn.classList.replace('bg-pink-500', 'bg-gray-500');
           document.getElementById('menu-container').innerHTML = '<p class="text-center text-red-500 font-bold p-8">目前非開放點餐時間。</p>'; document.getElementById('menu-container').classList.remove('hidden');
           return;
         }
-        menuData = res.menu; renderMenuCards(menuData);
+        renderMenuCards(menuData);
       }, showGasError);
     }
 
@@ -910,7 +912,6 @@
       }, showGasError, adminMenuData);
     }
 
-    // --- 【修改】管理員代訂送出邏輯 ---
     let proxyCart = []; let proxyUser = "";
     function initProxyOrder() { proxyCart=[]; proxyUser=""; document.getElementById('proxy-username').value=""; document.getElementById('admin-direct-step-1').classList.remove('hidden'); document.getElementById('admin-direct-step-2').classList.add('hidden'); }
     function startProxyOrder() { const n = document.getElementById('proxy-username').value.trim(); if(!n){showAlertModal("請輸入姓名！");return;} proxyUser=n; document.getElementById('proxy-current-name').textContent=proxyUser; document.getElementById('admin-direct-step-1').classList.add('hidden'); document.getElementById('admin-direct-step-2').classList.remove('hidden'); renderProxyMenu(); renderProxyCart(); }
@@ -923,15 +924,14 @@
     function renderProxyCart() { const c = document.getElementById('admin-direct-cart-list'); const t = document.getElementById('proxy-total-price'); const b = document.getElementById('proxy-submit-btn'); if(proxyCart.length===0){ c.innerHTML='空'; t.textContent='NT$ 0'; b.disabled=true; b.className="w-full py-3 bg-gray-400 text-white font-bold rounded-lg"; return; } let sum = 0; c.innerHTML = proxyCart.map((i, idx)=>{ sum+=i.price; let det=''; if(Object.keys(i.selections).length>0) det=`<div class="text-xs">${Object.values(i.selections).join(', ')}</div>`; return `<div class="flex justify-between items-center bg-gray-50 p-2 rounded border"><div><div class="font-bold text-gray-700">${i.name}</div>${det}</div><div class="flex items-center gap-3"><span class="text-red-600 font-bold">NT$ ${i.price}</span><button onclick="proxyCart.splice(${idx},1);renderProxyCart()" class="text-gray-400 font-bold">×</button></div></div>`; }).join(''); t.textContent=`NT$ ${sum}`; b.disabled=false; b.className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg shadow"; }
     
     function submitProxyOrder() { 
-      // 【修改】依據是否結單，顯示不同的警告訊息
       const confirmMsg = isSystemClosed ? `⚠️ 已經超過結單時間囉！\n確定還要硬幫「${proxyUser}」送出訂單嗎？` : `確定幫「${proxyUser}」送出？`;
 
       showConfirmModal(confirmMsg, () => { 
         const b = document.getElementById('proxy-submit-btn'); b.textContent="傳送中..."; b.disabled=true; const total = proxyCart.reduce((s,i)=>s+i.price,0); 
         runGas('logOrderToSheet', res => {
           if(res.success){ showAlertModal(`代點成功！`); initProxyOrder(); loadAdminOrders(); loadAdminSummary(); } else { showAlertModal("失敗："+res.message); b.disabled=false; b.textContent="確認送出"; } 
-        }, showGasError, { username: proxyUser, total: total, items: proxyCart, isAdminProxy: true }); // 【新增】帶上管理員代訂標記
-      }, isSystemClosed); // 如果結單了，按鈕會變成紅色的警告樣式
+        }, showGasError, { username: proxyUser, total: total, items: proxyCart, isAdminProxy: true }); 
+      }, isSystemClosed); 
     }
   </script>
 </body>
