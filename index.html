@@ -173,6 +173,7 @@
         <button onclick="switchAdminTab('orders')" id="tab-btn-orders" class="px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap">名單管理</button>
         <button onclick="switchAdminTab('summary')" id="tab-btn-summary" class="px-4 py-3 text-gray-500 whitespace-nowrap">訂購統計</button>
         <button onclick="switchAdminTab('menu')" id="tab-btn-menu" class="px-4 py-3 text-gray-500 whitespace-nowrap">菜單編輯</button>
+        <button onclick="switchAdminTab('history')" id="tab-btn-history" class="px-4 py-3 text-gray-500 whitespace-nowrap">切換餐廳</button>
         <button onclick="switchAdminTab('direct')" id="tab-btn-direct" class="px-4 py-3 text-gray-500 whitespace-nowrap">管理者代訂</button>
       </div>
     </div>
@@ -207,6 +208,16 @@
           <button id="save-menu-server-btn" onclick="saveMenuToServer()" class="w-full py-4 mt-6 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition flex justify-center items-center gap-2">
             ☁️ 將菜單儲存至雲端試算表
           </button>
+        </div>
+
+        <div id="admin-tab-history" class="hidden space-y-6 pb-20">
+          <div class="bg-white p-6 rounded-xl shadow-sm border border-pink-200">
+            <h3 class="text-xl font-bold text-pink-700 mb-2 flex items-center gap-2">🔄 切換歷史餐廳</h3>
+            <p class="text-sm text-gray-600 mb-6">選擇下方的歷史紀錄，系統將會直接載入該餐廳的菜單。<br><span class="text-red-500 font-bold">⚠️ 注意：載入後將會直接覆蓋掉目前的菜單喔！</span></p>
+            <div id="history-sheet-list" class="space-y-3">
+              <p class="text-center text-gray-400 py-4">讀取分頁中...</p>
+            </div>
+          </div>
         </div>
 
         <div id="admin-tab-direct" class="hidden space-y-6 pb-20">
@@ -475,7 +486,6 @@
         if (res.restaurantName) { document.getElementById('restaurant-name-display').textContent = res.restaurantName; }
         
         isSystemClosed = res.isClosed; 
-        // 【修正】不管有沒有結單，都要先把菜單存進記憶體，這樣管理員才看得到！
         menuData = res.menu || []; 
 
         if (res.isClosed) {
@@ -668,13 +678,62 @@
       }, showGasError, { username: currentUsername, total: total, items: itemsForGAS });
     }
 
+    // ==========================================
+    // 切換餐廳相關邏輯
+    // ==========================================
     function showAdminPanel() { document.getElementById('main-container').classList.add('hidden'); document.getElementById('admin-section').classList.remove('hidden'); switchAdminTab('orders'); }
     function closeAdminPanel() { document.getElementById('admin-section').classList.add('hidden'); document.getElementById('main-container').classList.remove('hidden'); }
     
     function switchAdminTab(tab) {
-      ['orders', 'summary', 'menu', 'direct'].forEach(t => { document.getElementById(`admin-tab-${t}`).classList.add('hidden'); document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap"; });
-      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden'); document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
-      if(tab==='orders') loadAdminOrders(); if(tab==='summary') loadAdminSummary(); if(tab==='menu') loadAdminMenuEditor(); if(tab==='direct') initProxyOrder();
+      ['orders', 'summary', 'menu', 'history', 'direct'].forEach(t => { 
+        document.getElementById(`admin-tab-${t}`).classList.add('hidden'); 
+        document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap"; 
+      });
+      document.getElementById(`admin-tab-${tab}`).classList.remove('hidden'); 
+      document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
+      if(tab==='orders') loadAdminOrders(); 
+      if(tab==='summary') loadAdminSummary(); 
+      if(tab==='menu') loadAdminMenuEditor(); 
+      if(tab==='history') loadHistorySheets(); // 【新增】
+      if(tab==='direct') initProxyOrder();
+    }
+
+    function loadHistorySheets() {
+      const container = document.getElementById('history-sheet-list');
+      container.innerHTML = '<p class="text-center text-gray-400 py-4">讀取分頁中...</p>';
+      runGas('getHistorySheets', res => {
+        if (res.success) {
+          if (res.sheets.length === 0) {
+            container.innerHTML = '<p class="text-center text-gray-500 py-4">找不到其他餐廳分頁</p>';
+            return;
+          }
+          container.innerHTML = res.sheets.map(sheet => `
+            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border border-gray-200 shadow-sm hover:border-pink-300 transition">
+              <span class="font-bold text-gray-700">${sheet}</span>
+              <button onclick="confirmImportHistory('${sheet}')" class="px-4 py-2 bg-pink-100 text-pink-700 font-bold rounded hover:bg-pink-200 transition">選擇此餐廳</button>
+            </div>
+          `).join('');
+        } else {
+          container.innerHTML = `<p class="text-center text-red-500 py-4">${res.message}</p>`;
+        }
+      }, showGasError);
+    }
+
+    function confirmImportHistory(sheetName) {
+      showConfirmModal(`確定要將「${sheetName}」設為本次菜單嗎？\n(這將會覆蓋掉目前正在使用的菜單內容喔！)`, () => {
+        const container = document.getElementById('history-sheet-list');
+        container.innerHTML = '<div class="text-center py-4"><div class="loading-spinner border-4 border-gray-200 border-t-pink-500 inline-block mb-2"></div><p class="text-pink-600 font-bold">正在載入菜單，請稍候...</p></div>';
+        
+        runGas('importHistoryMenu', res => {
+          if (res.success) {
+            showAlertModal(res.message);
+            loadHistorySheets(); // 重新整理列表
+          } else {
+            showAlertModal(res.message);
+            loadHistorySheets();
+          }
+        }, showGasError, sheetName);
+      }, true);
     }
 
     function loadAdminOrders() {
