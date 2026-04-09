@@ -175,6 +175,7 @@
         <button onclick="switchAdminTab('menu')" id="tab-btn-menu" class="px-4 py-3 text-gray-500 whitespace-nowrap">菜單編輯</button>
         <button onclick="switchAdminTab('history')" id="tab-btn-history" class="px-4 py-3 text-gray-500 whitespace-nowrap">切換餐廳</button>
         <button onclick="switchAdminTab('direct')" id="tab-btn-direct" class="px-4 py-3 text-gray-500 whitespace-nowrap">管理者代訂</button>
+        <button onclick="switchAdminTab('settings')" id="tab-btn-settings" class="px-4 py-3 text-gray-500 whitespace-nowrap">系統設定</button>
       </div>
     </div>
     
@@ -239,6 +240,12 @@
               </div>
           </div>
         </div>
+
+        <div id="admin-tab-settings" class="hidden space-y-6 pb-20">
+          <div id="admin-settings-container" class="bg-white p-5 rounded-lg shadow-sm border border-pink-200 space-y-4">
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -679,24 +686,76 @@
     }
 
     // ==========================================
-    // 切換餐廳相關邏輯
+    // 頁籤切換與系統設定相關邏輯
     // ==========================================
     function showAdminPanel() { document.getElementById('main-container').classList.add('hidden'); document.getElementById('admin-section').classList.remove('hidden'); switchAdminTab('orders'); }
     function closeAdminPanel() { document.getElementById('admin-section').classList.add('hidden'); document.getElementById('main-container').classList.remove('hidden'); }
     
     function switchAdminTab(tab) {
-      ['orders', 'summary', 'menu', 'history', 'direct'].forEach(t => { 
+      // 【修改】加入了 settings 頁籤的顯示隱藏邏輯
+      ['orders', 'summary', 'menu', 'history', 'direct', 'settings'].forEach(t => { 
         document.getElementById(`admin-tab-${t}`).classList.add('hidden'); 
         document.getElementById(`tab-btn-${t}`).className = "px-4 py-3 text-gray-500 whitespace-nowrap"; 
       });
       document.getElementById(`admin-tab-${tab}`).classList.remove('hidden'); 
       document.getElementById(`tab-btn-${tab}`).className = "px-4 py-3 text-pink-600 border-b-2 border-pink-600 font-bold whitespace-nowrap";
+      
       if(tab==='orders') loadAdminOrders(); 
       if(tab==='summary') loadAdminSummary(); 
       if(tab==='menu') loadAdminMenuEditor(); 
-      if(tab==='history') loadHistorySheets(); // 【新增】
+      if(tab==='history') loadHistorySheets();
       if(tab==='direct') initProxyOrder();
+      if(tab==='settings') loadAdminSettings(); // 【新增】呼叫載入設定
     }
+
+    // --- 【新增】系統設定的相關函式 ---
+    function loadAdminSettings() {
+      const container = document.getElementById('admin-settings-container');
+      container.innerHTML = '<p class="text-center p-8 text-gray-500">載入設定中...</p>';
+      
+      runGas('getAdminSettings', res => {
+        if (res.error) { showGasError(res); return; }
+        container.innerHTML = `
+          <h3 class="text-xl font-bold text-pink-700 mb-4 flex items-center gap-2">⚙️ 系統設定</h3>
+          <div>
+              <label class="block font-bold text-gray-700 mb-1">截單時間 (超過此時間自動關閉點餐)</label>
+              <input type="datetime-local" id="set-cutoff" value="${res.cutoff}" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-pink-300 outline-none">
+          </div>
+          <div>
+              <label class="block font-bold text-gray-700 mb-1">跑馬燈公告</label>
+              <input type="text" id="set-ann" value="${res.ann}" placeholder="例如：本週五前請完成點餐喔！" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-pink-300 outline-none">
+          </div>
+          <div>
+              <label class="block font-bold text-gray-700 mb-1">午餐店名 (將顯示於前台標題)</label>
+              <input type="text" id="set-restaurant" value="${res.restaurantName}" placeholder="例如: 麥當勞" class="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-pink-300 outline-none">
+          </div>
+          <button onclick="saveAdminSettingsUI()" class="w-full py-3 mt-6 bg-pink-600 text-white font-bold rounded-lg shadow-md hover:bg-pink-700 transition">💾 儲存所有設定</button>
+        `;
+      }, showGasError);
+    }
+
+    function saveAdminSettingsUI() {
+      const data = {
+        cutoff: document.getElementById('set-cutoff').value,
+        ann: document.getElementById('set-ann').value,
+        restaurantName: document.getElementById('set-restaurant').value
+      };
+      const btn = document.querySelector('#admin-settings-container button');
+      btn.disabled = true; btn.textContent = "儲存中...";
+      
+      runGas('saveSystemSettings', res => {
+        if(res.success) {
+            showAlertModal(res.message);
+            // 儲存成功後，重新抓取前台資料來更新標題跟跑馬燈
+            loadSystemData(); 
+            loadAdminSettings(); 
+        } else {
+            showAlertModal(res.message);
+            btn.disabled = false; btn.textContent = "💾 儲存所有設定";
+        }
+      }, showGasError, data);
+    }
+    // ------------------------------------
 
     function loadHistorySheets() {
       const container = document.getElementById('history-sheet-list');
@@ -727,7 +786,7 @@
         runGas('importHistoryMenu', res => {
           if (res.success) {
             showAlertModal(res.message);
-            loadHistorySheets(); // 重新整理列表
+            loadHistorySheets(); 
           } else {
             showAlertModal(res.message);
             loadHistorySheets();
