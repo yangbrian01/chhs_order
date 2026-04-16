@@ -224,9 +224,15 @@
               <button onclick="openMenuEditorModal(-1)" class="bg-pink-600 text-white px-3 py-1.5 rounded-lg shadow text-sm font-bold hover:bg-pink-700">+ 新增品項</button>
             </div>
             <div id="admin-menu-list-container" class="space-y-3"></div>
-            <button id="save-menu-server-btn" onclick="saveMenuToServer()" class="w-full py-4 mt-6 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition flex justify-center items-center gap-2">
-              ☁️ 將菜單儲存至雲端試算表
-            </button>
+            
+            <div class="space-y-3 mt-6">
+              <button id="save-menu-server-btn" onclick="saveMenuToServer()" class="w-full py-4 bg-pink-500 text-white font-bold rounded-xl shadow-lg hover:bg-pink-600 transition flex justify-center items-center gap-2">
+                ☁️ 更新目前菜單 (Menu 分頁)
+              </button>
+              <button id="save-as-history-btn" onclick="saveCurrentMenuAsNewSheet()" class="w-full py-4 bg-indigo-500 text-white font-bold rounded-xl shadow-lg hover:bg-indigo-600 transition flex justify-center items-center gap-2">
+                📂 將此餐廳存入歷史 (新增試算表分頁)
+              </button>
+            </div>
           </div>
   
           <div id="admin-tab-history" class="hidden space-y-6 pb-20">
@@ -817,7 +823,7 @@
     }
 
     // ==========================================
-    // 頁籤切換與系統設定相關邏輯 (與舊版不變)
+    // 頁籤切換與系統設定相關邏輯
     // ==========================================
     function showAdminPanel() { document.getElementById('main-container').classList.add('hidden'); document.getElementById('admin-section').classList.remove('hidden'); switchAdminTab('orders'); }
     function closeAdminPanel() { document.getElementById('admin-section').classList.add('hidden'); document.getElementById('main-container').classList.remove('hidden'); }
@@ -1110,9 +1116,36 @@
       const btn = document.getElementById('save-menu-server-btn');
       btn.disabled = true; btn.innerHTML = `<div class="loading-spinner border-white border-t-transparent w-5 h-5 inline-block"></div> 正在同步至試算表...`;
       runGas('saveMenuData', res => {
-        btn.disabled = false; btn.innerHTML = `☁️ 將菜單儲存至雲端試算表`;
+        btn.disabled = false; btn.innerHTML = `☁️ 更新目前菜單 (Menu 分頁)`;
         if (res.success) { showAlertModal(res.message); loadSystemData(); } else { showAlertModal(res.message); }
       }, showGasError, adminMenuData);
+    }
+
+    // 【新增】儲存為歷史分頁
+    function saveCurrentMenuAsNewSheet() {
+      const btn = document.getElementById('save-as-history-btn');
+      const restaurantName = document.getElementById('restaurant-name-display').textContent;
+
+      if (!restaurantName || restaurantName.includes('本日供應')) {
+        showAlertModal("請先在「系統設定」中設定正確的餐廳名稱，再進行儲存！");
+        return;
+      }
+
+      showConfirmModal(`確定要將目前的菜單儲存為新分頁「${restaurantName}」嗎？`, () => {
+        btn.disabled = true;
+        btn.innerHTML = `<div class="loading-spinner border-white border-t-transparent w-5 h-5 inline-block"></div> 正在建立分頁...`;
+
+        runGas('saveCurrentMenuAsNewSheet', res => {
+          btn.disabled = false;
+          btn.innerHTML = `📂 將此餐廳存入歷史 (新增試算表分頁)`;
+          if (res.success) {
+            showAlertModal(res.message);
+            loadHistorySheets(); // 更新歷史分頁列表
+          } else {
+            showAlertModal(res.message);
+          }
+        }, showGasError);
+      });
     }
 
     let proxyCart = []; let proxyUser = "";
